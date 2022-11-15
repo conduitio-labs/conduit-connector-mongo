@@ -28,32 +28,21 @@ type AuthMechanism string
 
 // The list of available authentication mechanisms is listed below.
 const (
-	SCRAMSHA256AuthMechanism AuthMechanism = "SCRAM-SHA-256"
-	SCRAMSHA1AuthMechanism   AuthMechanism = "SCRAM-SHA-1"
-	MongoDBCRAuthMechanism   AuthMechanism = "MONGODB-CR"
-	MongoDBAWSAuthMechanism  AuthMechanism = "MONGODB-AWS"
-	X509AuthMechanism        AuthMechanism = "X.509"
+	SCRAMSHA256 AuthMechanism = "SCRAM-SHA-256"
+	SCRAMSHA1   AuthMechanism = "SCRAM-SHA-1"
+	MongoDBCR   AuthMechanism = "MONGODB-CR"
+	MongoDBAWS  AuthMechanism = "MONGODB-AWS"
+	X509        AuthMechanism = "X.509"
 )
 
-// authMechanismMap holds a map with all possible auth mechanisms.
-// It's a helper for checking if a string is a valid auth mechanism.
-var authMechanismMap = map[string]AuthMechanism{
-	"SCRAM-SHA-256": SCRAMSHA256AuthMechanism,
-	"SCRAM-SHA-1":   SCRAMSHA1AuthMechanism,
-	"MONGODB-CR":    MongoDBCRAuthMechanism,
-	"MONGODB-AWS":   MongoDBAWSAuthMechanism,
-	"X.509":         X509AuthMechanism,
-}
-
-// ParseAuthMechanism parses an auth mechanism string.
-func ParseAuthMechanism(authMechanismStr string) (AuthMechanism, error) {
-	if authMechanism, ok := authMechanismMap[strings.ToUpper(authMechanismStr)]; ok {
-		return authMechanism, nil
+// IsValid checks if the underlying AuthMechanism is valid.
+func (am AuthMechanism) IsValid() bool {
+	switch am {
+	case SCRAMSHA256, SCRAMSHA1, MongoDBCR, MongoDBAWS, X509:
+		return true
 	}
 
-	return "", &UnsupportedAuthMechanismError{
-		AuthMechanism: authMechanismStr,
-	}
+	return false
 }
 
 const (
@@ -121,19 +110,17 @@ func Parse(raw map[string]string) (Config, error) {
 			Username:              raw[KeyAuthUsername],
 			Password:              raw[KeyAuthPassword],
 			DB:                    raw[KeyAuthDB],
+			Mechanism:             AuthMechanism(strings.ToUpper(raw[KeyAuthMechanism])),
 			TLSCAFile:             raw[KeyAuthTLSCAFile],
 			TLSCertificateKeyFile: raw[KeyAuthTLSCertificateKeyFile],
 		},
 	}
 
-	// parse auth mechanism if it's not empty
-	if authMechanismStr := raw[KeyAuthMechanism]; authMechanismStr != "" {
-		authMechanism, err := ParseAuthMechanism(authMechanismStr)
-		if err != nil {
-			return Config{}, fmt.Errorf("parse auth mechanism: %w", err)
+	// validate auth mechanism if it's not empty
+	if config.Auth.Mechanism != "" && !config.Auth.Mechanism.IsValid() {
+		return Config{}, &InvalidAuthMechanismError{
+			AuthMechanism: config.Auth.Mechanism,
 		}
-
-		config.Auth.Mechanism = authMechanism
 	}
 
 	if err := validator.ValidateStruct(&config); err != nil {

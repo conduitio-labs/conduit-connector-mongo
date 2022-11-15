@@ -16,12 +16,12 @@ package config
 
 import "fmt"
 
-// UnsupportedAuthMechanismError occurs when a string is not a valid [AuthMechanism].
-type UnsupportedAuthMechanismError struct {
-	AuthMechanism string
+// InvalidAuthMechanismError occurs when a string is not a valid [AuthMechanism].
+type InvalidAuthMechanismError struct {
+	AuthMechanism AuthMechanism
 }
 
-// Error returns a formated error message for the [UnsupportedAuthMechanismError].
-func (e *UnsupportedAuthMechanismError) Error() string {
-	return fmt.Sprintf("unsupported auth mechanism %q", e.AuthMechanism)
+// Error returns a formated error message for the [InvalidAuthMechanismError].
+func (e *InvalidAuthMechanismError) Error() string {
+	return fmt.Sprintf("invalid auth mechanism %q", e.AuthMechanism)
 }

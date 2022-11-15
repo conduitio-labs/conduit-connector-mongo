@@ -19,56 +19,48 @@ import (
 	"testing"
 )
 
-func TestParseAuthMechanism(t *testing.T) {
+func TestAuthMechanism_IsValid(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name             string
-		authMechanismStr string
-		want             AuthMechanism
-		wantErr          bool
+		name string
+		am   AuthMechanism
+		want bool
 	}{
 		{
-			name:             "success_SCRAM_SHA_256",
-			authMechanismStr: "SCRAM-SHA-256",
-			want:             SCRAMSHA256AuthMechanism,
-			wantErr:          false,
+			name: "success_SCRAM_SHA_256",
+			am:   "SCRAM-SHA-256",
+			want: true,
 		},
 		{
-			name:             "success_SCRAM_SHA_256_lower",
-			authMechanismStr: "scram-sha-256",
-			want:             SCRAMSHA256AuthMechanism,
-			wantErr:          false,
+			name: "success_SCRAM_SHA_1",
+			am:   "SCRAM-SHA-1",
+			want: true,
 		},
 		{
-			name:             "success_SCRAM_SHA_1",
-			authMechanismStr: "SCRAM-SHA-1",
-			want:             SCRAMSHA1AuthMechanism,
-			wantErr:          false,
+			name: "success_MONGODB_CR",
+			am:   "MONGODB-CR",
+			want: true,
 		},
 		{
-			name:             "success_MONGODB_CR",
-			authMechanismStr: "MONGODB-CR",
-			want:             MongoDBCRAuthMechanism,
-			wantErr:          false,
+			name: "success_MONGODB_AWS",
+			am:   "MONGODB-AWS",
+			want: true,
 		},
 		{
-			name:             "success_MONGODB_AWS",
-			authMechanismStr: "MONGODB-AWS",
-			want:             MongoDBAWSAuthMechanism,
-			wantErr:          false,
+			name: "success_X.509",
+			am:   "X.509",
+			want: true,
 		},
 		{
-			name:             "success_X.509",
-			authMechanismStr: "X.509",
-			want:             X509AuthMechanism,
-			wantErr:          false,
+			name: "fail_unsupported",
+			am:   "SASL",
+			want: false,
 		},
 		{
-			name:             "fail_unsupported",
-			authMechanismStr: "SASL",
-			want:             "",
-			wantErr:          true,
+			name: "fail_empty_string",
+			am:   "",
+			want: false,
 		},
 	}
 
@@ -78,14 +70,8 @@ func TestParseAuthMechanism(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := ParseAuthMechanism(tt.authMechanismStr)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseAuthMechanism() error = %v, wantErr %v", err, tt.wantErr)
-
-				return
-			}
-			if got != tt.want {
-				t.Errorf("ParseAuthMechanism() = %v, want %v", got, tt.want)
+			if got := tt.am.IsValid(); got != tt.want {
+				t.Errorf("AuthMechanism.IsValid() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -135,7 +121,27 @@ func TestParse(t *testing.T) {
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
-					Mechanism: SCRAMSHA256AuthMechanism,
+					Mechanism: SCRAMSHA256,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "success_with_auth_mechanism_lowercase",
+			args: args{
+				raw: map[string]string{
+					KeyURI:           "mongodb://localhost:27017",
+					KeyDB:            "test",
+					KeyCollection:    "users",
+					KeyAuthMechanism: "scram-sha-256",
+				},
+			},
+			want: Config{
+				URI:        "mongodb://localhost:27017",
+				DB:         "test",
+				Collection: "users",
+				Auth: AuthConfig{
+					Mechanism: SCRAMSHA256,
 				},
 			},
 			wantErr: false,
@@ -157,7 +163,7 @@ func TestParse(t *testing.T) {
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
-					Mechanism:             SCRAMSHA256AuthMechanism,
+					Mechanism:             SCRAMSHA256,
 					TLSCAFile:             "config.go",
 					TLSCertificateKeyFile: "config.go",
 				},
