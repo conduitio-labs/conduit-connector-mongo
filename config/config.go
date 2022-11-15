@@ -35,24 +35,27 @@ const (
 	X509AuthMechanism        AuthMechanism = "X.509"
 )
 
+// authMechanismMap holds a map with all possible auth mechanisms.
+// It's a helper for checking if a string is a valid auth mechanism.
+var authMechanismMap = map[AuthMechanism]bool{
+	SCRAMSHA256AuthMechanism: true,
+	SCRAMSHA1AuthMechanism:   true,
+	MongoDBCRAuthMechanism:   true,
+	MongoDBAWSAuthMechanism:  true,
+	X509AuthMechanism:        true,
+}
+
 // ParseAuthMechanism parses an auth mechanism string.
 func ParseAuthMechanism(authMechanism string) (AuthMechanism, error) {
-	switch strings.ToUpper(authMechanism) {
-	case "SCRAM-SHA-256":
-		return SCRAMSHA256AuthMechanism, nil
-	case "SCRAM-SHA-1":
-		return SCRAMSHA1AuthMechanism, nil
-	case "MONGODB-CR":
-		return MongoDBCRAuthMechanism, nil
-	case "MONGODB-AWS":
-		return MongoDBAWSAuthMechanism, nil
-	case "X.509":
-		return X509AuthMechanism, nil
+	authMechanism = strings.ToUpper(authMechanism)
+
+	if !authMechanismMap[AuthMechanism(authMechanism)] {
+		return "", &UnsupportedAuthMechanismError{
+			AuthMechanism: authMechanism,
+		}
 	}
 
-	return "", &UnsupportedAuthMechanismError{
-		AuthMechanism: authMechanism,
-	}
+	return AuthMechanism(authMechanism), nil
 }
 
 const (
