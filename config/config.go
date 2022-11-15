@@ -46,16 +46,16 @@ var authMechanismMap = map[AuthMechanism]bool{
 }
 
 // ParseAuthMechanism parses an auth mechanism string.
-func ParseAuthMechanism(authMechanism string) (AuthMechanism, error) {
-	authMechanism = strings.ToUpper(authMechanism)
+func ParseAuthMechanism(authMechanismStr string) (AuthMechanism, error) {
+	authMechanism := AuthMechanism(strings.ToUpper(authMechanismStr))
 
-	if !authMechanismMap[AuthMechanism(authMechanism)] {
+	if !authMechanismMap[authMechanism] {
 		return "", &UnsupportedAuthMechanismError{
-			AuthMechanism: authMechanism,
+			AuthMechanism: authMechanismStr,
 		}
 	}
 
-	return AuthMechanism(authMechanism), nil
+	return authMechanism, nil
 }
 
 const (
