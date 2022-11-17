@@ -35,9 +35,10 @@ var (
 )
 
 // ValidateStruct validates a struct.
-func ValidateStruct(data any) (err error) {
+func ValidateStruct(data any) error {
 	lazyInit()
 
+	var err error
 	validationErr := validate.Struct(data)
 	if validationErr != nil {
 		if errors.Is(validationErr, (*validator.InvalidValidationError)(nil)) {
@@ -57,12 +58,17 @@ func ValidateStruct(data any) (err error) {
 					err = multierr.Append(err, maxErr(fieldName, fieldErr.Param()))
 				case "file":
 					err = multierr.Append(err, fileErr(fieldName))
+				case "gte":
+					err = multierr.Append(err, gteErr(fieldName, fieldErr.Param()))
+				case "lte":
+					err = multierr.Append(err, lteErr(fieldName, fieldErr.Param()))
 				}
 			}
 		}
 	}
 
-	return
+	//nolint:wrapcheck // since we use multierr here, we don't want to wrap the error
+	return err
 }
 
 // requiredErr returns the formatted required error.
@@ -83,6 +89,16 @@ func maxErr(name, max string) error {
 // fileErr returns the formatted file error.
 func fileErr(name string) error {
 	return fmt.Errorf("%q value must be a valid file path and exist", name)
+}
+
+// gteErr returns the formatted gte error.
+func gteErr(name, gte string) error {
+	return fmt.Errorf("%q value must be greater than or equal to %s", name, gte)
+}
+
+// lteErr returns the formatted lte error.
+func lteErr(name, lte string) error {
+	return fmt.Errorf("%q value must be less than or equal to %s", name, lte)
 }
 
 // getFieldKey returns a key ("key" tag) for the provided fieldName. If the "key" tag is not present,
