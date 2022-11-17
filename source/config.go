@@ -32,6 +32,7 @@ const ConfigKeyBatchSize = "batchSize"
 type Config struct {
 	config.Config
 
+	// BatchSize is the size of a document batch.
 	BatchSize int `key:"batchSize" validate:"gte=1,lte=100000"`
 }
 
