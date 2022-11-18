@@ -102,7 +102,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Required:    false,
 			Description: "The size of a document batch.",
 		},
-		ConfigKeyCopyExisting: {
+		ConfigKeyCopyExistingData: {
 			Default:  "true",
 			Required: false,
 			Description: "The field determines whether or not the connector " +

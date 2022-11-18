@@ -25,15 +25,15 @@ import (
 const (
 	// defaultBatchSize is the default value for the batchSize field.
 	defaultBatchSize = 1000
-	// defaultCopyExisting is the default value for the copyExisting field.
-	defaultCopyExisting = true
+	// defaultCopyExistingData is the default value for the copyExistingData field.
+	defaultCopyExistingData = true
 )
 
 const (
 	// ConfigKeyBatchSize is a config name for a batch size.
 	ConfigKeyBatchSize = "batchSize"
-	// ConfigKeyCopyExisting is a config name for a copyExisting field.
-	ConfigKeyCopyExisting = "copyExisting"
+	// ConfigKeyCopyExistingData is a config name for a copyExistingData field.
+	ConfigKeyCopyExistingData = "copyExistingData"
 )
 
 // Config contains source-specific configurable values.
@@ -42,9 +42,9 @@ type Config struct {
 
 	// BatchSize is the size of a document batch.
 	BatchSize int `key:"batchSize" validate:"gte=1,lte=100000"`
-	// CopyExisting determines whether or not the connector will take a snapshot
+	// CopyExistingData determines whether or not the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
-	CopyExisting bool `key:"copyExisting"`
+	CopyExistingData bool `key:"copyExistingData"`
 }
 
 // ParseConfig maps the incoming map to the [Config] and validates it.
@@ -55,9 +55,9 @@ func ParseConfig(raw map[string]string) (Config, error) {
 	}
 
 	sourceConfig := Config{
-		Config:       commonConfig,
-		BatchSize:    defaultBatchSize,
-		CopyExisting: defaultCopyExisting,
+		Config:           commonConfig,
+		BatchSize:        defaultBatchSize,
+		CopyExistingData: defaultCopyExistingData,
 	}
 
 	// parse batch size if it's not empty
@@ -70,14 +70,14 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		sourceConfig.BatchSize = batchSize
 	}
 
-	// parse copyExisting if it's not empty
-	if copyExistingStr := raw[ConfigKeyCopyExisting]; copyExistingStr != "" {
-		copyExisting, err := strconv.ParseBool(copyExistingStr)
+	// parse copyExistingData if it's not empty
+	if copyExistingDataStr := raw[ConfigKeyCopyExistingData]; copyExistingDataStr != "" {
+		copyExisting, err := strconv.ParseBool(copyExistingDataStr)
 		if err != nil {
-			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeyCopyExisting, err)
+			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeyCopyExistingData, err)
 		}
 
-		sourceConfig.CopyExisting = copyExisting
+		sourceConfig.CopyExistingData = copyExisting
 	}
 
 	if err := validator.ValidateStruct(&sourceConfig); err != nil {
