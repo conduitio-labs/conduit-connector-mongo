@@ -18,10 +18,12 @@ package mongo
 
 import (
 	sdk "github.com/conduitio/conduit-connector-sdk"
+
+	"github.com/conduitio-labs/conduit-connector-mongo/destination"
 )
 
 var Connector = sdk.Connector{
 	NewSpecification: Specification,
 	NewSource:        nil,
-	NewDestination:   nil,
+	NewDestination:   destination.NewDestination,
 }

@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2022 Meroxa, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package destination
 
 import (
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"fmt"
 
-	mongo "github.com/conduitio-labs/conduit-connector-mongo"
+	"github.com/conduitio-labs/conduit-connector-mongo/config"
 )
 
-func main() {
-	sdk.Serve(mongo.Connector)
+type Config struct {
+	config.Config
+}
+
+func ParseConfig(cfg map[string]string) (Config, error) {
+	common, err := config.Parse(cfg)
+	if err != nil {
+		return Config{}, fmt.Errorf("parse common config: %w", err)
+	}
+
+	destinationConfig := Config{
+		Config: common,
+	}
+
+	return destinationConfig, nil
 }

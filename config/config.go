@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
 )
 
@@ -128,4 +130,31 @@ func Parse(raw map[string]string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func (d *Config) GetOptions() *options.ClientOptions {
+	uri, properties := d.getURIAndPropertiesByMechanism()
+	cred := options.Credential{
+		AuthMechanism:           string(d.Auth.Mechanism),
+		AuthMechanismProperties: properties,
+		AuthSource:              d.Auth.DB,
+		Username:                d.Auth.Username,
+		Password:                d.Auth.Password,
+		PasswordSet:             true,
+	}
+
+	return options.Client().ApplyURI(uri).SetAuth(cred)
+}
+
+//nolint:unparam // because for now map returns only nil, but later it will be implemented at AWS
+func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
+	//nolint:exhaustive // because most of the mechanisms using same options
+	switch d.Auth.Mechanism {
+	case X509:
+		route := "/?tlsCAFile=%s&tlsCertificateKeyFile=%s"
+
+		return d.URI + fmt.Sprintf(route, d.Auth.TLSCAFile, d.Auth.TLSCertificateKeyFile), nil
+	default:
+		return d.URI, nil
+	}
 }
