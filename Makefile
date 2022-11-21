@@ -10,3 +10,6 @@ test:
 
 lint:
 	golangci-lint run --config .golangci.yml
+
+mockgen:
+	mockgen -package mock -source source/source.go -destination source/mock/source.go

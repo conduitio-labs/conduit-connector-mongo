@@ -66,6 +66,10 @@ const (
 	KeyAuthTLSCAFile = "auth.tls.caFile"
 	// KeyAuthTLSCertificateKeyFile is a config name for a TLS certificate key file.
 	KeyAuthTLSCertificateKeyFile = "auth.tls.certificateKeyFile"
+	// KeyAuthAWSSessionToken is a config name for an AWS session token.
+	//
+	//nolint:gosec // it's not hardcoded credentials
+	KeyAuthAWSSessionToken = "auth.awsSessionToken"
 )
 
 // Config contains configurable values shared between
@@ -100,6 +104,8 @@ type AuthConfig struct {
 	// TLSCertificateKeyFile is the path to the client certificate
 	// file or the client private key file.
 	TLSCertificateKeyFile string `key:"auth.tls.certificateKeyFile" validate:"omitempty,file"`
+	// AWSSessionToken is an AWS session token.
+	AWSSessionToken string `key:"auth.awsSessionToken"`
 }
 
 // Parse maps the incoming map to the [Config] and validates it.
@@ -115,6 +121,7 @@ func Parse(raw map[string]string) (Config, error) {
 			Mechanism:             AuthMechanism(strings.ToUpper(raw[KeyAuthMechanism])),
 			TLSCAFile:             raw[KeyAuthTLSCAFile],
 			TLSCertificateKeyFile: raw[KeyAuthTLSCertificateKeyFile],
+			AWSSessionToken:       raw[KeyAuthAWSSessionToken],
 		},
 	}
 
