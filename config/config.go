@@ -139,7 +139,7 @@ func Parse(raw map[string]string) (Config, error) {
 	return config, nil
 }
 
-// GetOptions returns generated options for mongo connection depending on mechanism
+// GetOptions returns generated options for mongo connection depending on mechanism.
 func (d *Config) GetOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
 	cred := options.Credential{

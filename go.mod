@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/conduitio/conduit-connector-sdk v0.3.0
 	github.com/go-playground/validator/v10 v10.11.1
+	github.com/golang/mock v1.6.0
+	github.com/matryer/is v1.4.0
 	go.mongodb.org/mongo-driver v1.11.0
 	go.uber.org/multierr v1.8.0
 )
@@ -22,7 +24,6 @@ require (
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/matryer/is v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect

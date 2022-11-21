@@ -121,6 +121,7 @@ func (d *Destination) Open(ctx context.Context) error {
 	return nil
 }
 
+// Write writes a record into a Destination.
 func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, error) {
 	for i, record := range records {
 		if err := d.writer.InsertRecord(ctx, record); err != nil {
