@@ -18,6 +18,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -139,19 +140,35 @@ func Parse(raw map[string]string) (Config, error) {
 	return config, nil
 }
 
+const (
+	// awsSessionTokenPropertyName is a name of a AWS session token property
+	// for the auth mechanism properties.
+	//
+	//nolint:gosec // it's not hardcoded credentials
+	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN"
+	// tlsCAFile is a URL query name for a TLS CA file.
+	tlsCAFileQueryName = "tlsCAFile"
+	// tlsCertificateKeyFileQueryName is a URL query name for a TLS certificate key file.
+	tlsCertificateKeyFileQueryName = "tlsCertificateKeyFile"
+)
+
 // GetOptions returns generated options for mongo connection depending on mechanism.
 func (d *Config) GetOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
+	opts := options.Client().ApplyURI(uri)
+	if d.Auth == (AuthConfig{}) {
+		return opts
+	}
+
 	cred := options.Credential{
 		AuthMechanism:           string(d.Auth.Mechanism),
 		AuthMechanismProperties: properties,
 		AuthSource:              d.Auth.DB,
 		Username:                d.Auth.Username,
 		Password:                d.Auth.Password,
-		PasswordSet:             true,
 	}
 
-	return options.Client().ApplyURI(uri).SetAuth(cred)
+	return opts.SetAuth(cred)
 }
 
 //nolint:unparam // because for now map returns only nil, but later it will be implemented at AWS
@@ -159,9 +176,19 @@ func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
 	//nolint:exhaustive // because most of the mechanisms using same options
 	switch d.Auth.Mechanism {
 	case X509:
-		route := "/?tlsCAFile=%s&tlsCertificateKeyFile=%s"
+		parsedURI, _ := url.Parse(d.URI)
 
-		return d.URI + fmt.Sprintf(route, d.Auth.TLSCAFile, d.Auth.TLSCertificateKeyFile), nil
+		values := parsedURI.Query()
+		values.Add(tlsCAFileQueryName, d.Auth.TLSCAFile)
+		values.Add(tlsCertificateKeyFileQueryName, d.Auth.TLSCertificateKeyFile)
+
+		parsedURI.RawQuery = values.Encode()
+
+		return parsedURI.String(), nil
+	case MongoDBAWS:
+		return d.URI, map[string]string{
+			awsSessionTokenPropertyName: d.Auth.AWSSessionToken,
+		}
 	default:
 		return d.URI, nil
 	}

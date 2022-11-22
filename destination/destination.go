@@ -24,7 +24,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 )
 
-// Writer defines a writer interface needed for the Destination.
+// Writer defines a writer interface needed for the [Destination].
 type Writer interface {
 	InsertRecord(ctx context.Context, record sdk.Record) error
 	Close(ctx context.Context) error
@@ -35,7 +35,7 @@ type Destination struct {
 	sdk.UnimplementedDestination
 
 	writer Writer
-	config Config
+	config config.Config
 }
 
 // NewDestination creates new instance of the Destination.
@@ -47,56 +47,58 @@ func NewDestination() sdk.Destination {
 func (d *Destination) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
-			Default:     "",
-			Required:    true,
-			Description: "An URI of MongoDB server",
-		},
-		config.KeyAuthDB: {
-			Default:     "",
-			Required:    true,
-			Description: "A database that contains credentials to auth",
+			Default:  "",
+			Required: true,
+			Description: "The connection string. " +
+				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
 		config.KeyDB: {
 			Default:     "",
 			Required:    true,
-			Description: "A database for connector to work with",
+			Description: "The name of a database the connector must work with.",
 		},
 		config.KeyCollection: {
 			Default:     "",
 			Required:    true,
-			Description: "A collection for connector to work with",
+			Description: "The name of a collection the connector must read from.",
 		},
 		config.KeyAuthUsername: {
 			Default:     "",
-			Required:    true,
-			Description: "Username part of credentials",
+			Required:    false,
+			Description: "The username.",
 		},
 		config.KeyAuthPassword: {
 			Default:     "",
-			Required:    true,
-			Description: "Password part of credentials",
+			Required:    false,
+			Description: "The user's password.",
+		},
+		config.KeyAuthDB: {
+			Default:     "admin",
+			Required:    false,
+			Description: "The name of a database that contains the user's authentication data.",
 		},
 		config.KeyAuthMechanism: {
-			Default:     "",
+			Default:     "The default mechanism that defined depending on your MongoDB server version.",
 			Required:    false,
-			Description: "A name of method which will be used to connect to MongoDB, if not set, using Mongo default",
+			Description: "The authentication mechanism. ",
 		},
 		config.KeyAuthTLSCAFile: {
-			Default:     "",
-			Required:    false,
-			Description: "TLSCA filename to connect to MongoDB via X.509 Mechanism",
+			Default:  "",
+			Required: false,
+			Description: "The path to either a single or a bundle of certificate authorities" +
+				" to trust when making a TLS connection.",
 		},
 		config.KeyAuthTLSCertificateKeyFile: {
 			Default:     "",
 			Required:    false,
-			Description: "TLS Certificate Key filename to connect to MongoDB via X.509 Mechanism",
+			Description: "The path to the client certificate file or the client private key file.",
 		},
 	}
 }
 
 // Configure parses and initializes the config.
 func (d *Destination) Configure(ctx context.Context, cfg map[string]string) error {
-	configuration, err := ParseConfig(cfg)
+	configuration, err := config.Parse(cfg)
 	if err != nil {
 		return fmt.Errorf("parse config: %w", err)
 	}
@@ -135,7 +137,9 @@ func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, err
 // Teardown gracefully closes connections.
 func (d *Destination) Teardown(ctx context.Context) error {
 	if d.writer != nil {
-		return fmt.Errorf("teardown: %w", d.writer.Close(ctx))
+		if err := d.writer.Close(ctx); err != nil {
+			return fmt.Errorf("close writer: %w", err)
+		}
 	}
 
 	return nil
