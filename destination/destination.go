@@ -110,7 +110,7 @@ func (d *Destination) Configure(ctx context.Context, cfg map[string]string) erro
 
 // Open makes sure everything is prepared to receive records.
 func (d *Destination) Open(ctx context.Context) error {
-	db, err := mongo.Connect(ctx, d.config.GetOptions())
+	db, err := mongo.Connect(ctx, d.config.GetClientOptions())
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}

@@ -152,8 +152,8 @@ const (
 	tlsCertificateKeyFileQueryName = "tlsCertificateKeyFile"
 )
 
-// GetOptions returns generated options for mongo connection depending on mechanism.
-func (d *Config) GetOptions() *options.ClientOptions {
+// GetClientOptions returns generated options for mongo connection depending on mechanism.
+func (d *Config) GetClientOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
 	opts := options.Client().ApplyURI(uri)
 	if d.Auth == (AuthConfig{}) {
