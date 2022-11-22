@@ -171,7 +171,7 @@ func (d *Config) GetOptions() *options.ClientOptions {
 	return opts.SetAuth(cred)
 }
 
-// getURIAndPropertiesByMechanism generates uri and options depending on auth mechanism
+// getURIAndPropertiesByMechanism generates uri and options depending on auth mechanism.
 func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
 	//nolint:exhaustive // because most of the mechanisms using same options
 	switch d.Auth.Mechanism {
