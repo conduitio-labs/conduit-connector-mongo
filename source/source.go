@@ -18,13 +18,26 @@ package source
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// bsoncodec.RegistryBuilder allows us to specify the logic of
+// decoding/encoding certain BSON types, that will be performed
+// inside the MongoDB Go driver.
+//
+// In this particular case we convert bson.ObjectID to string
+// when unmarshaling a raw BSON element to map[string]any.
+var registry = bson.NewRegistryBuilder().
+	RegisterTypeMapEntry(bsontype.ObjectID, reflect.TypeOf(string(""))).
+	Build()
 
 // Iterator defines an Iterator interface needed for the [Source].
 type Iterator interface {
@@ -125,20 +138,25 @@ func (s *Source) Configure(ctx context.Context, raw map[string]string) error {
 }
 
 // Open opens needed connections and prepares to start producing records.
-func (s *Source) Open(ctx context.Context, position sdk.Position) error {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.config.URI))
+func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
+	opts := options.Client().ApplyURI(s.config.URI).SetRegistry(registry)
+
+	var err error
+	s.client, err = mongo.Connect(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}
 
-	if err := client.Ping(ctx, nil); err != nil {
+	if err = s.client.Ping(ctx, nil); err != nil {
 		return fmt.Errorf("ping mongo server: %w", err)
 	}
 
-	collection := client.Database(s.config.DB).Collection(s.config.Collection)
+	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
 
-	s.client = client
-	s.iterator = iterator.NewSnapshot(collection)
+	s.iterator, err = iterator.NewCDC(ctx, collection, sdkPosition)
+	if err != nil {
+		return fmt.Errorf("create cdc iterator: %w", err)
+	}
 
 	return nil
 }
