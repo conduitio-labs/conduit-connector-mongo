@@ -73,6 +73,18 @@ const (
 	KeyAuthAWSSessionToken = "auth.awsSessionToken"
 )
 
+const (
+	// awsSessionTokenPropertyName is a name of a AWS session token property
+	// for the auth mechanism properties.
+	//
+	//nolint:gosec // it's not hardcoded credentials
+	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN"
+	// tlsCAFile is a URL query name for a TLS CA file.
+	tlsCAFileQueryName = "tlsCAFile"
+	// tlsCertificateKeyFileQueryName is a URL query name for a TLS certificate key file.
+	tlsCertificateKeyFileQueryName = "tlsCertificateKeyFile"
+)
+
 // Config contains configurable values shared between
 // source and destination MongoDB connector.
 type Config struct {
@@ -140,18 +152,6 @@ func Parse(raw map[string]string) (Config, error) {
 	return config, nil
 }
 
-const (
-	// awsSessionTokenPropertyName is a name of a AWS session token property
-	// for the auth mechanism properties.
-	//
-	//nolint:gosec // it's not hardcoded credentials
-	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN"
-	// tlsCAFile is a URL query name for a TLS CA file.
-	tlsCAFileQueryName = "tlsCAFile"
-	// tlsCertificateKeyFileQueryName is a URL query name for a TLS certificate key file.
-	tlsCertificateKeyFileQueryName = "tlsCertificateKeyFile"
-)
-
 // GetClientOptions returns generated options for mongo connection depending on mechanism.
 func (d *Config) GetClientOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
@@ -176,6 +176,9 @@ func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
 	//nolint:exhaustive // because most of the mechanisms using same options
 	switch d.Auth.Mechanism {
 	case X509:
+		// ignore the error here, because we have a validation in the Parse function,
+		// and we sure that the d.URI is a valid URI
+		// TODO: change the d.URI field type from string to *url.URL
 		parsedURI, _ := url.Parse(d.URI)
 
 		values := parsedURI.Query()
