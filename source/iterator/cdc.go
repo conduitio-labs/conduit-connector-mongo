@@ -31,9 +31,9 @@ const metadataFieldCollection = "mongo.collection"
 
 // The supported Change Stream event operation types are listed below.
 const (
-	OperationTypeInsert = "insert"
-	OperationTypeUpdate = "update"
-	OperationTypeDelete = "delete"
+	operationTypeInsert = "insert"
+	operationTypeUpdate = "update"
+	operationTypeDelete = "delete"
 )
 
 // changeStreamMatchPipeline is a MongoDB Change Stream pipeline that
@@ -42,9 +42,9 @@ var changeStreamMatchPipeline = bson.D{
 	{
 		Key: "$match", Value: bson.M{
 			"operationType": bson.M{"$in": []string{
-				OperationTypeInsert,
-				OperationTypeUpdate,
-				OperationTypeDelete,
+				operationTypeInsert,
+				operationTypeUpdate,
+				operationTypeDelete,
 			}},
 		},
 	},
@@ -86,17 +86,17 @@ func (e changeStreamEvent) toRecord() (sdk.Record, error) {
 	metadata.SetCreatedAt(e.WallTime)
 
 	switch e.OperationType {
-	case OperationTypeInsert:
+	case operationTypeInsert:
 		return sdk.Util.Source.NewRecordCreate(
 			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), sdk.StructuredData(e.FullDocument),
 		), nil
 
-	case OperationTypeUpdate:
+	case operationTypeUpdate:
 		return sdk.Util.Source.NewRecordUpdate(
 			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), nil, sdk.StructuredData(e.FullDocument),
 		), nil
 
-	case OperationTypeDelete:
+	case operationTypeDelete:
 		return sdk.Util.Source.NewRecordDelete(
 			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey),
 		), nil
