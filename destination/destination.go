@@ -30,7 +30,7 @@ type Writer interface {
 	Close(ctx context.Context) error
 }
 
-// Destination Mongo Connector persists records to a MongoDB
+// Destination Mongo Connector persists records to a MongoDB.
 type Destination struct {
 	sdk.UnimplementedDestination
 
