@@ -156,6 +156,8 @@ func Parse(raw map[string]string) (Config, error) {
 func (d *Config) GetClientOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
 	opts := options.Client().ApplyURI(uri)
+
+	// If we don't have any custom auth options, we should skip adding credential options
 	if d.Auth == (AuthConfig{}) {
 		return opts
 	}

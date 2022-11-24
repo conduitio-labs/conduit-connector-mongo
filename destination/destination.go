@@ -30,7 +30,7 @@ type Writer interface {
 	Close(ctx context.Context) error
 }
 
-// Destination Vitess Connector persists records to a MySQL database via VTgate instance.
+// Destination Mongo Connector persists records to a MongoDB
 type Destination struct {
 	sdk.UnimplementedDestination
 
