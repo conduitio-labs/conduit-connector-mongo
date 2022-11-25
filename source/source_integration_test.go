@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	// set the directConnection to true in order to avoid the known hostname problem
+	// set the directConnection to true in order to avoid the known hostname problem.
 	testURI              = "mongodb://localhost:27017/?directConnection=true"
 	testDB               = "test"
 	testCollectionPrefix = "test_coll"
