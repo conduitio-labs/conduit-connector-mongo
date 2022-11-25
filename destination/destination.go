@@ -111,7 +111,7 @@ func (d *Destination) Configure(ctx context.Context, cfg map[string]string) erro
 	return nil
 }
 
-// registry registers StringObjectIDCodec
+// registry registers StringObjectIDCodec.
 var registry = bson.NewRegistryBuilder().RegisterDefaultEncoder(reflect.String, writer.StringObjectIDCodec{}).Build()
 
 // Open makes sure everything is prepared to receive records.
