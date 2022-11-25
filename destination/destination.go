@@ -17,8 +17,10 @@ package destination
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
@@ -109,9 +111,13 @@ func (d *Destination) Configure(ctx context.Context, cfg map[string]string) erro
 	return nil
 }
 
+// registry registers StringObjectIDCodec
+var registry = bson.NewRegistryBuilder().RegisterDefaultEncoder(reflect.String, writer.StringObjectIDCodec{}).Build()
+
 // Open makes sure everything is prepared to receive records.
 func (d *Destination) Open(ctx context.Context) error {
-	db, err := mongo.Connect(ctx, d.config.GetClientOptions())
+	db, err := mongo.Connect(ctx, d.config.GetClientOptions().
+		SetRegistry(registry))
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}

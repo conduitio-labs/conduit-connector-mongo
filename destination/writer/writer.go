@@ -21,7 +21,6 @@ import (
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -84,18 +83,6 @@ func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 	parsed := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &parsed); err != nil {
 		return fmt.Errorf("parse payload: %w", err)
-	}
-
-	keys, err := parseKeys(record)
-	if err != nil {
-		return fmt.Errorf("unable to parse key in update: %w", err)
-	}
-
-	// we should change keys into ObjectID type if possible for future queries.
-	for i, v := range keys {
-		if _, ok := parsed[i]; ok {
-			parsed[i] = v
-		}
 	}
 
 	if _, err := w.db.InsertOne(ctx, parsed); err != nil {
@@ -168,26 +155,7 @@ func parseKeys(data sdk.Record) (sdk.StructuredData, error) {
 		return nil, fmt.Errorf("parse payload: %w", err)
 	}
 
-	// trying to parse each Key into ObjectID for optimization.
-	for key, keyValue := range parsed {
-		parsed[key] = tryParseToObjectID(keyValue)
-	}
-
 	return parsed, nil
-}
-
-func tryParseToObjectID(data any) any {
-	str, ok := data.(string)
-	if !ok {
-		return data
-	}
-
-	hex, err := primitive.ObjectIDFromHex(str)
-	if err != nil {
-		return data
-	}
-
-	return hex
 }
 
 // generateBsonFromMap generates bson.D object from map[string]any data.
