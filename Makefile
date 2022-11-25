@@ -8,7 +8,7 @@ build:
 test:
 	docker run --rm -d -p 27017:27017 --name mongodb mongo --replSet=test && \
 	sleep 4 && \
-	docker exec -it mongodb mongosh --eval "rs.initiate();"
+	docker exec mongodb mongosh --eval "rs.initiate();"
 	go test $(GOTEST_FLAGS) ./... && \
 	docker stop mongodb
 
