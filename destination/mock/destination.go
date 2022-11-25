@@ -50,9 +50,9 @@ func (mr *MockWriterMockRecorder) Close(ctx interface{}) *gomock.Call {
 }
 
 // InsertRecord mocks base method.
-func (m *MockWriter) InsertRecord(ctx context.Context, record sdk.Record) error {
+func (m *MockWriter) Write(ctx context.Context, record sdk.Record) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertRecord", ctx, record)
+	ret := m.ctrl.Call(m, "Write", ctx, record)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -60,5 +60,5 @@ func (m *MockWriter) InsertRecord(ctx context.Context, record sdk.Record) error 
 // InsertRecord indicates an expected call of InsertRecord.
 func (mr *MockWriterMockRecorder) InsertRecord(ctx, record interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRecord", reflect.TypeOf((*MockWriter)(nil).InsertRecord), ctx, record)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockWriter)(nil).Write), ctx, record)
 }
