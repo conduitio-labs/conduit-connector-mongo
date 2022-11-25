@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
 // Writer defines a writer interface needed for the [Destination].

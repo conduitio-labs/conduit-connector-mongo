@@ -1,3 +1,17 @@
+// Copyright © 2022 Meroxa, Inc. & Yalantis
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package writer
 
 import (
@@ -9,13 +23,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Writer struct {
-	db        *mongo.Collection
-	table     string
-	updateOpt *options.UpdateOptions
+	db    *mongo.Collection
+	table string
 }
 
 // Params is an incoming params for the NewWriter function.
@@ -27,47 +39,66 @@ type Params struct {
 // NewWriter creates new instance of the Writer.
 func NewWriter(ctx context.Context, params Params) (*Writer, error) {
 	writer := &Writer{
-		db:        params.DB,
-		table:     params.Table,
-		updateOpt: options.Update().SetUpsert(true),
+		db:    params.DB,
+		table: params.Table,
 	}
 
 	return writer, nil
 }
 
 // InsertRecord inserts a sdk.Record into a Destination.
-func (w *Writer) InsertRecord(ctx context.Context, record sdk.Record) error {
-	return sdk.Util.Destination.Route(ctx,
+func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
+	if err := sdk.Util.Destination.Route(ctx,
 		record,
 		w.insert,
 		w.update,
 		w.delete,
 		w.insert,
-	)
+	); err != nil {
+		return fmt.Errorf("insert record error: %w", err)
+	}
+
+	return nil
 }
 
 func (w *Writer) Close(ctx context.Context) error {
-	return w.db.Database().Client().Disconnect(ctx)
+	err := w.db.Database().Client().Disconnect(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to close: %w", err)
+	}
+
+	return nil
 }
 
 const (
-	idFieldName = "_id"
-	setCommand  = "$set"
+	// defaultIDFieldName contains default reserved primary key from MongoDB.
+	defaultIDFieldName = "_id"
+
+	// setCommand contains command, that used during Update query.
+	setCommand = "$set"
 )
 
 func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
-	structuredData := make(sdk.StructuredData)
-	if err := json.Unmarshal(record.Payload.After.Bytes(), &structuredData); err != nil {
-		return fmt.Errorf("unmarshal data into structured data: %w", err)
+	// we are not using method parsePayload, because we need to save _id in payload during insert
+	// (it probably not appear in Key, and we need to handle that).
+	parsed := make(sdk.StructuredData)
+	if err := json.Unmarshal(record.Payload.After.Bytes(), &parsed); err != nil {
+		return fmt.Errorf("parse payload: %w", err)
 	}
 
-	id, data := parseData(structuredData)
-	//if id exists, we should return it into map, because we need it as field, not filter
-	if id != nil {
-		data[idFieldName] = id
+	keys, err := parseKeys(record)
+	if err != nil {
+		return fmt.Errorf("unable to parse key in update: %w", err)
 	}
 
-	if _, err := w.db.InsertOne(ctx, structuredData); err != nil {
+	// we should change keys into ObjectID type if possible for future queries.
+	for i, v := range keys {
+		if _, ok := parsed[i]; ok {
+			parsed[i] = v
+		}
+	}
+
+	if _, err := w.db.InsertOne(ctx, parsed); err != nil {
 		return fmt.Errorf("insert data into destination: %w", err)
 	}
 
@@ -75,20 +106,25 @@ func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 }
 
 func (w *Writer) update(ctx context.Context, record sdk.Record) error {
-	structuredData := make(sdk.StructuredData)
-	if err := json.Unmarshal(record.Payload.After.Bytes(), &structuredData); err != nil {
-		return fmt.Errorf("unmarshal data into structured data: %w", err)
+	data, err := parsePayload(record)
+	if err != nil {
+		return fmt.Errorf("unable to parse payload in update: %w", err)
 	}
 
-	id, data := parseData(structuredData)
-	body := generateBsonFromMap(data)
+	ids, err := parseKeys(record)
+	if err != nil {
+		return fmt.Errorf("unable to parse key in update: %w", err)
+	}
 
-	filter := bson.D{{idFieldName, id}}
+	filter := generateBsonFromMap(ids)
+	body := generateBsonFromMap(data)
 
 	if _, err := w.db.UpdateOne(ctx,
 		filter,
-		bson.D{{setCommand, body}},
-		w.updateOpt,
+		bson.D{{
+			Key:   setCommand,
+			Value: body,
+		}},
 	); err != nil {
 		return fmt.Errorf("upsert data into destination: %w", err)
 	}
@@ -97,15 +133,12 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 }
 
 func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
-	structuredData := make(sdk.StructuredData)
-	if err := json.Unmarshal(record.Key.Bytes(), &structuredData); err != nil {
-		return fmt.Errorf("unmarshal data into structured data: %w", err)
+	ids, err := parseKeys(record)
+	if err != nil {
+		return fmt.Errorf("unable to parse key in update: %w", err)
 	}
 
-	//no need to get body, we will delete this record by _id field
-	id, _ := parseData(structuredData)
-
-	filter := bson.D{{idFieldName, id}}
+	filter := generateBsonFromMap(ids)
 
 	if _, err := w.db.DeleteOne(ctx,
 		filter,
@@ -116,39 +149,56 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	return nil
 }
 
-// parseData is checking for _id field in data. If it exists, it splits it for upsert, otherwise leaving raw
-func parseData(data sdk.StructuredData) (any, map[string]any) {
-	rawID, exist := data[idFieldName]
-	if !exist {
-		//if no id set, using all fields as data
-		return nil, data
+// parsePayload is parsing Payload.After from record and deleting key from payload (we using it from Key field).
+func parsePayload(data sdk.Record) (map[string]any, error) {
+	parsed := make(sdk.StructuredData)
+	if err := json.Unmarshal(data.Payload.After.Bytes(), &parsed); err != nil {
+		return nil, fmt.Errorf("parse payload: %w", err)
 	}
 
-	//deleting id from data
-	delete(data, idFieldName)
+	delete(parsed, defaultIDFieldName) // deleting key from payload arguments
 
-	//trying to assert id into string
-	idStr, ok := rawID.(string)
-	if ok {
-		//if it's string, we could try to parse it into ObjectID
-		hex, err := primitive.ObjectIDFromHex(idStr)
-		if err == nil {
-			return hex, data
-		}
-	}
-
-	//if id is not an ObjectID, just split it
-	return rawID, data
+	return parsed, nil
 }
 
-// generateBsonFromMap generates bson.D object from map[string]any data
+// parseKeys extracts key fields from record trying to convert them to ObjectID type.
+func parseKeys(data sdk.Record) (sdk.StructuredData, error) {
+	parsed := make(sdk.StructuredData)
+	if err := json.Unmarshal(data.Key.Bytes(), &parsed); err != nil {
+		return nil, fmt.Errorf("parse payload: %w", err)
+	}
+
+	// trying to parse each Key into ObjectID for optimization.
+	for key, keyValue := range parsed {
+		parsed[key] = tryParseToObjectID(keyValue)
+	}
+
+	return parsed, nil
+}
+
+func tryParseToObjectID(data any) any {
+	str, ok := data.(string)
+	if !ok {
+		return data
+	}
+
+	hex, err := primitive.ObjectIDFromHex(str)
+	if err != nil {
+		return data
+	}
+
+	return hex
+}
+
+// generateBsonFromMap generates bson.D object from map[string]any data.
 func generateBsonFromMap(m map[string]any) bson.D {
-	var res = make(bson.D, 0, len(m))
+	res := make(bson.D, 0, len(m))
 	for i, v := range m {
 		res = append(res, bson.E{
 			Key:   i,
 			Value: v,
 		})
 	}
+
 	return res
 }
