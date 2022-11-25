@@ -153,6 +153,10 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	is.Equal(record.Payload.After, firstTestItem)
 
 	// stop the source
+	cancel()
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
 	err = source.Teardown(ctx)
 	is.NoErr(err)
 
@@ -182,6 +186,10 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	is.Equal(record.Payload.After, updatedFirstItem)
 
 	// stop the source one more time
+	cancel()
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
 	err = source.Teardown(ctx)
 	is.NoErr(err)
 
