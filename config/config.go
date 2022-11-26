@@ -18,32 +18,14 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
 )
 
-// AuthMechanism defines a MongoDB authentication mechanism.
-type AuthMechanism string
-
-// The list of available authentication mechanisms is listed below.
-const (
-	SCRAMSHA256 AuthMechanism = "SCRAM-SHA-256"
-	SCRAMSHA1   AuthMechanism = "SCRAM-SHA-1"
-	MongoDBCR   AuthMechanism = "MONGODB-CR"
-	MongoDBAWS  AuthMechanism = "MONGODB-AWS"
-	X509        AuthMechanism = "X.509"
-)
-
-// IsValid checks if the underlying AuthMechanism is valid.
-func (am AuthMechanism) IsValid() bool {
-	switch am {
-	case SCRAMSHA256, SCRAMSHA1, MongoDBCR, MongoDBAWS, X509:
-		return true
-	}
-
-	return false
-}
+// defaultConnectionURI is a default MongoDB connection URI string.
+var defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
 
 const (
 	// KeyURI is a config name for a connection string.
@@ -70,12 +52,34 @@ const (
 	KeyAuthAWSSessionToken = "auth.awsSessionToken"
 )
 
+// AuthMechanism defines a MongoDB authentication mechanism.
+type AuthMechanism string
+
+// The list of available authentication mechanisms is listed below.
+const (
+	SCRAMSHA256 AuthMechanism = "SCRAM-SHA-256"
+	SCRAMSHA1   AuthMechanism = "SCRAM-SHA-1"
+	MongoDBCR   AuthMechanism = "MONGODB-CR"
+	MongoDBAWS  AuthMechanism = "MONGODB-AWS"
+	MongoDBX509 AuthMechanism = "MONGODB-X509"
+)
+
+// IsValid checks if the underlying AuthMechanism is valid.
+func (am AuthMechanism) IsValid() bool {
+	switch am {
+	case SCRAMSHA256, SCRAMSHA1, MongoDBCR, MongoDBAWS, MongoDBX509:
+		return true
+	}
+
+	return false
+}
+
 // Config contains configurable values shared between
 // source and destination MongoDB connector.
 type Config struct {
 	// URI is the connection string.
 	// The URI can contain host names, IPv4/IPv6 literals, or an SRV record.
-	URI string `key:"uri" validate:"required,uri"`
+	URI *url.URL `key:"uri" validate:"uri"`
 	// DB is the name of a database the connector must work with.
 	DB string `key:"db" validate:"required,max=64"`
 	// Collection is the name of a collection the connector must
@@ -109,7 +113,7 @@ type AuthConfig struct {
 // Parse maps the incoming map to the [Config] and validates it.
 func Parse(raw map[string]string) (Config, error) {
 	config := Config{
-		URI:        raw[KeyURI],
+		URI:        defaultConnectionURI,
 		DB:         raw[KeyDB],
 		Collection: raw[KeyCollection],
 		Auth: AuthConfig{
@@ -121,6 +125,16 @@ func Parse(raw map[string]string) (Config, error) {
 			TLSCertificateKeyFile: raw[KeyAuthTLSCertificateKeyFile],
 			AWSSessionToken:       raw[KeyAuthAWSSessionToken],
 		},
+	}
+
+	// parse URI if it's not empty
+	if uriStr := raw[KeyURI]; uriStr != "" {
+		uri, err := url.Parse(uriStr)
+		if err != nil {
+			return Config{}, fmt.Errorf("parse %q: %w", KeyURI, err)
+		}
+
+		config.URI = uri
 	}
 
 	// validate auth mechanism if it's not empty

@@ -15,6 +15,7 @@
 package source
 
 import (
+	"net/url"
 	"reflect"
 	"testing"
 
@@ -39,7 +40,10 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
@@ -58,7 +62,10 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
@@ -77,7 +84,10 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
@@ -89,8 +99,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "fail_invalid_common_config_missing_required",
 			raw: map[string]string{
-				config.KeyDB:         "test",
-				config.KeyCollection: "users",
+				config.KeyDB: "test",
 			},
 			want:    Config{},
 			wantErr: true,
