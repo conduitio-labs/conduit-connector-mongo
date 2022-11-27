@@ -15,6 +15,7 @@
 package config
 
 import (
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -49,7 +50,7 @@ func TestAuthMechanism_IsValid(t *testing.T) {
 		},
 		{
 			name: "success_X.509",
-			am:   "X.509",
+			am:   "MONGODB-X509",
 			want: true,
 		},
 		{
@@ -91,16 +92,39 @@ func TestParse(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "success_only_required_fields",
+			name: "success_only_required_and_default_fields",
 			args: args{
 				raw: map[string]string{
-					KeyURI:        "mongodb://localhost:27017",
 					KeyDB:         "test",
 					KeyCollection: "users",
 				},
 			},
 			want: Config{
-				URI:        "mongodb://localhost:27017",
+				URI: &url.URL{
+					Scheme: "mongodb",
+					Host:   "localhost:27017",
+				},
+				DB:         "test",
+				Collection: "users",
+			},
+			wantErr: false,
+		},
+		{
+			name: "success_custom_uri",
+			args: args{
+				raw: map[string]string{
+					KeyURI:        "mongodb://localhost:28088/?directConnection=true",
+					KeyDB:         "test",
+					KeyCollection: "users",
+				},
+			},
+			want: Config{
+				URI: &url.URL{
+					Scheme:   "mongodb",
+					Host:     "localhost:28088",
+					Path:     "/",
+					RawQuery: "directConnection=true",
+				},
 				DB:         "test",
 				Collection: "users",
 			},
@@ -117,7 +141,10 @@ func TestParse(t *testing.T) {
 				},
 			},
 			want: Config{
-				URI:        "mongodb://localhost:27017",
+				URI: &url.URL{
+					Scheme: "mongodb",
+					Host:   "localhost:27017",
+				},
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
@@ -137,7 +164,10 @@ func TestParse(t *testing.T) {
 				},
 			},
 			want: Config{
-				URI:        "mongodb://localhost:27017",
+				URI: &url.URL{
+					Scheme: "mongodb",
+					Host:   "localhost:27017",
+				},
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
@@ -159,7 +189,10 @@ func TestParse(t *testing.T) {
 				},
 			},
 			want: Config{
-				URI:        "mongodb://localhost:27017",
+				URI: &url.URL{
+					Scheme: "mongodb",
+					Host:   "localhost:27017",
+				},
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{

@@ -64,8 +64,8 @@ func NewSource() sdk.Source {
 func (s *Source) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
-			Default:  "",
-			Required: true,
+			Default:  "mongodb://localhost:27017",
+			Required: false,
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
@@ -139,7 +139,7 @@ func (s *Source) Configure(ctx context.Context, raw map[string]string) error {
 
 // Open opens needed connections and prepares to start producing records.
 func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
-	opts := options.Client().ApplyURI(s.config.URI).SetRegistry(registry)
+	opts := options.Client().ApplyURI(s.config.URI.String()).SetRegistry(registry)
 
 	var err error
 	s.client, err = mongo.Connect(ctx, opts)

@@ -7,11 +7,12 @@ build:
 	go build -ldflags "-X 'github.com/conduitio-labs/conduit-connector-mongo.version=${VERSION}'" -o conduit-connector-mongo cmd/connector/main.go
 
 test:
-	docker run --rm -d -p 27017:27017 --name mongodb mongo --replSet=test && \
-	sleep $(MONGODB_STARTUP_TIMEOUT) && \
+	docker run --rm -d -p 27017:27017 --name mongodb mongo --replSet=test
+	sleep $(MONGODB_STARTUP_TIMEOUT) 
 	docker exec mongodb mongosh --eval "rs.initiate();"
-	go test $(GOTEST_FLAGS) ./... && \
-	docker stop mongodb
+	go test $(GOTEST_FLAGS) ./...; ret=$$?; \
+		docker stop mongodb; \
+		exit $$ret
 
 lint:
 	golangci-lint run --config .golangci.yml

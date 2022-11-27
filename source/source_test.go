@@ -17,6 +17,7 @@ package source
 import (
 	"context"
 	"errors"
+	"net/url"
 	"testing"
 	"time"
 
@@ -42,7 +43,10 @@ func TestSource_Configure_success(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(s.config, Config{
 		Config: config.Config{
-			URI:        "mongodb://localhost:27017",
+			URI: &url.URL{
+				Scheme: "mongodb",
+				Host:   "localhost:27017",
+			},
 			DB:         "test",
 			Collection: "users",
 		},
@@ -63,7 +67,7 @@ func TestSource_Configure_failure(t *testing.T) {
 		config.KeyDB:         "test",
 		config.KeyCollection: "users",
 	})
-	is.Equal(err.Error(), `parse source config: parse common config: validate struct: "uri" value must be a valid URI`)
+	is.True(err != nil)
 }
 
 func TestSource_Read_success(t *testing.T) {
