@@ -54,7 +54,7 @@ func NewWriter(ctx context.Context, params Params) (*Writer, error) {
 	return writer, nil
 }
 
-// InsertRecord inserts a sdk.Record into a Destination.
+// Write inserts a sdk.Record into a Destination.
 func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 	if err := sdk.Util.Destination.Route(ctx,
 		record,
