@@ -16,7 +16,6 @@ package iterator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -25,9 +24,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-// metadataFieldCollection is a name of a record metadata field that stores a MongoDB collection name.
-const metadataFieldCollection = "mongo.collection"
 
 // The supported Change Stream event operation types are listed below.
 const (
@@ -73,9 +69,12 @@ type changeStreamEvent struct {
 
 // toRecord converts the underlying [changeStreamEvent] to an [sdk.Record].
 func (e changeStreamEvent) toRecord() (sdk.Record, error) {
-	position := &Position{e.ID}
+	position := &position{
+		Mode:        modeCDC,
+		ResumeToken: e.ID,
+	}
 
-	sdkPosition, err := position.MarshalSDKPosition()
+	sdkPosition, err := position.marshalSDKPosition()
 	if err != nil {
 		return sdk.Record{}, fmt.Errorf("marshal position into sdk.Position: %w", err)
 	}
@@ -104,42 +103,37 @@ func (e changeStreamEvent) toRecord() (sdk.Record, error) {
 	default:
 		// this shouldn't happen as we filter Change Stream events by operation type,
 		// and get only insert, update, and delete
-		return sdk.Record{}, ErrUnsupportedOperationType
+		return sdk.Record{}, errUnsupportedOperationType
 	}
 }
 
-// CDC implements a Change Data Capture iterator for the MongoDB.
+// cdc implements a Change Data Capture iterator for the MongoDB.
 // It works by creating and listening to a MongoDB [Change Stream].
 //
 // [Change Stream]: https://www.mongodb.com/docs/manual/changeStreams/.
-type CDC struct {
+type cdc struct {
 	changeStream *mongo.ChangeStream
 }
 
-// NewCDC creates a new instance of the [CDC].
-func NewCDC(ctx context.Context, collection *mongo.Collection, sdkPosition sdk.Position) (*CDC, error) {
-	position, err := ParsePosition(sdkPosition)
-	if err != nil && !errors.Is(err, ErrNilSDKPosition) {
-		return nil, fmt.Errorf("parse sdk.Position: %w", err)
-	}
-
+// newCDC creates a new instance of the [cdc].
+func newCDC(ctx context.Context, collection *mongo.Collection, position *position) (*cdc, error) {
 	changeStream, err := createChangeStream(ctx, collection, position)
 	if err != nil {
 		return nil, fmt.Errorf("create change stream: %w", err)
 	}
 
-	return &CDC{
+	return &cdc{
 		changeStream: changeStream,
 	}, nil
 }
 
-// HasNext checks whether the [CDC] iterator has records to return or not.
-func (c *CDC) HasNext(ctx context.Context) (bool, error) {
+// hasNext checks whether the [cdc] iterator has records to return or not.
+func (c *cdc) hasNext(ctx context.Context) (bool, error) {
 	return c.changeStream.TryNext(ctx), c.changeStream.Err()
 }
 
-// Next returns the next record.
-func (c *CDC) Next(ctx context.Context) (sdk.Record, error) {
+// next returns the next record.
+func (c *cdc) next(_ context.Context) (sdk.Record, error) {
 	var event changeStreamEvent
 	if err := c.changeStream.Decode(&event); err != nil {
 		return sdk.Record{}, fmt.Errorf("decode change stream event: %w", err)
@@ -153,8 +147,8 @@ func (c *CDC) Next(ctx context.Context) (sdk.Record, error) {
 	return record, nil
 }
 
-// Stop stops the iterator.
-func (c *CDC) Stop(ctx context.Context) error {
+// stop stops the iterator.
+func (c *cdc) stop(ctx context.Context) error {
 	if c.changeStream != nil {
 		if err := c.changeStream.Close(ctx); err != nil {
 			return fmt.Errorf("close change stream: %w", err)
@@ -168,12 +162,12 @@ func (c *CDC) Stop(ctx context.Context) error {
 // The resulting Change Stream will listen to events only with the following
 // operation types: insert, update and delete.
 //
-// If a provided [Position] is not empty and it has a resumeToken, the Change Stream
+// If a provided [position] is not empty and it has a resumeToken, the Change Stream
 // will start listening to events from that particular position.
 func createChangeStream(
 	ctx context.Context,
 	collection *mongo.Collection,
-	position *Position,
+	position *position,
 ) (*mongo.ChangeStream, error) {
 	// the UpdateLookup option includes a delta describing the changes to the document
 	// and a copy of the entire document that was changed

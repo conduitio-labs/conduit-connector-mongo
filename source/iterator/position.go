@@ -22,15 +22,31 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// Position is an iterator position.
+// positionMode defines the [position] mode.
+type positionMode string
+
+// The available position modes are listed below.
+const (
+	modeSnapshot positionMode = "snapshot"
+	modeCDC      positionMode = "cdc"
+)
+
+// position is an iterator position.
 // It consists of a resumeToken token that allows us to resume a Change Stream
 // or restart a snapshot process from a particular position.
-type Position struct {
-	ResumeToken bson.Raw `json:"resumeToken"`
+type position struct {
+	Mode positionMode `json:"mode"`
+	// ResumeToken is a Change Stream resume token
+	// that allows resuming a Change Stream.
+	// This value is used if the mode is CDC.
+	ResumeToken bson.Raw `json:"resumeToken,omitempty"`
+	// Element is a value of the last processed element by the snapshot capture.
+	// This value is used if the mode is snapshot.
+	Element any `json:"string,omitempty"`
 }
 
-// MarshalSDKPosition marshals the underlying [Position] into a [sdk.Position] as JSON bytes.
-func (p *Position) MarshalSDKPosition() (sdk.Position, error) {
+// marshalSDKPosition marshals the underlying [position] into a [sdk.Position] as JSON bytes.
+func (p *position) marshalSDKPosition() (sdk.Position, error) {
 	positionBytes, err := json.Marshal(p)
 	if err != nil {
 		return nil, fmt.Errorf("marshal position: %w", err)
@@ -39,16 +55,16 @@ func (p *Position) MarshalSDKPosition() (sdk.Position, error) {
 	return sdk.Position(positionBytes), nil
 }
 
-// ParsePosition converts an [sdk.Position] into a [Position].
-func ParsePosition(sdkPosition sdk.Position) (*Position, error) {
+// parsePosition converts an [sdk.Position] into a [position].
+func parsePosition(sdkPosition sdk.Position) (*position, error) {
 	if sdkPosition == nil {
-		return nil, ErrNilSDKPosition
+		return nil, errNilSDKPosition
 	}
 
-	var position Position
-	if err := json.Unmarshal(sdkPosition, &position); err != nil {
-		return nil, fmt.Errorf("unmarshal sdk.Position into Position: %w", err)
+	var pos position
+	if err := json.Unmarshal(sdkPosition, &pos); err != nil {
+		return nil, fmt.Errorf("unmarshal sdk.Position into position: %w", err)
 	}
 
-	return &position, nil
+	return &pos, nil
 }

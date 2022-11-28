@@ -38,6 +38,115 @@ const (
 	testCollectionPrefix = "test_coll"
 )
 
+func TestSource_Read_successSnapshot(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
+	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	is.NoErr(err)
+	t.Cleanup(func() {
+		err = mongoClient.Disconnect(context.Background())
+		is.NoErr(err)
+	})
+
+	// connect to the test database and create the test collection
+	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	// drop the created test collection after the test
+	t.Cleanup(func() {
+		err = testCollection.Drop(context.Background())
+		is.NoErr(err)
+	})
+
+	// insert a test item to the test collection
+	testItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	record, err := source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationSnapshot)
+	is.Equal(record.Payload.After, testItem)
+}
+
+func TestSource_Read_continueSnapshot(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
+	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	is.NoErr(err)
+	t.Cleanup(func() {
+		err = mongoClient.Disconnect(context.Background())
+		is.NoErr(err)
+	})
+
+	// connect to the test database and create the test collection
+	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	// drop the created test collection after the test
+	t.Cleanup(func() {
+		err = testCollection.Drop(context.Background())
+		is.NoErr(err)
+	})
+
+	// insert two test items to the test collection
+	firstTestItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	secondTestItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	// check the first item
+	record, err := source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationSnapshot)
+	is.Equal(record.Payload.After, firstTestItem)
+
+	cancel()
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	err = source.Teardown(ctx)
+	is.NoErr(err)
+
+	// restart the source after the pause,
+	// with the last record's position
+	err = source.Open(ctx, record.Position)
+	is.NoErr(err)
+
+	// check that the connector can still see the second item
+	// after the pause
+	record, err = source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationSnapshot)
+	is.Equal(record.Payload.After, secondTestItem)
+}
+
 func TestSource_Read_successCDC(t *testing.T) {
 	is := is.New(t)
 

@@ -52,6 +52,7 @@ func TestSource_Configure_success(t *testing.T) {
 		},
 		BatchSize:        defaultBatchSize,
 		CopyExistingData: defaultCopyExistingData,
+		OrderingColumn:   defaultOrderingColumn,
 	})
 }
 

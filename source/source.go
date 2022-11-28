@@ -61,6 +61,8 @@ func NewSource() sdk.Source {
 }
 
 // Parameters is a map of named Parameters that describe how to configure the [Source].
+//
+//nolint:funlen // yeah, this function can become long at some point.
 func (s *Source) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
@@ -121,6 +123,12 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
 		},
+		ConfigKeyOrderingColumn: {
+			Default:  "_id",
+			Required: false,
+			Description: "The name of a field that is used for ordering " +
+				"collection elements when capturing a snapshot.",
+		},
 	}
 }
 
@@ -153,7 +161,13 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 
 	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
 
-	s.iterator, err = iterator.NewCDC(ctx, collection, sdkPosition)
+	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
+		Collection:       collection,
+		BatchSize:        s.config.BatchSize,
+		CopyExistingData: s.config.CopyExistingData,
+		OrderingColumn:   s.config.OrderingColumn,
+		SDKPosition:      sdkPosition,
+	})
 	if err != nil {
 		return fmt.Errorf("create cdc iterator: %w", err)
 	}

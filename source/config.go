@@ -27,6 +27,8 @@ const (
 	defaultBatchSize = 1000
 	// defaultCopyExistingData is the default value for the copyExistingData field.
 	defaultCopyExistingData = true
+	// defaultOrderingColumn is the default value for the orderingColumn field.
+	defaultOrderingColumn = "_id"
 )
 
 const (
@@ -34,6 +36,8 @@ const (
 	ConfigKeyBatchSize = "batchSize"
 	// ConfigKeyCopyExistingData is a config name for a copyExistingData field.
 	ConfigKeyCopyExistingData = "copyExistingData"
+	// ConfigKeyOrderingColumn is a config name for a orderingColumn field.
+	ConfigKeyOrderingColumn = "orderingColumn"
 )
 
 // Config contains source-specific configurable values.
@@ -45,6 +49,9 @@ type Config struct {
 	// CopyExistingData determines whether or not the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
 	CopyExistingData bool `key:"copyExistingData"`
+	// OrderingColumn is the name of a field that is used for ordering
+	// collection elements when capturing a snapshot.
+	OrderingColumn string `key:"orderingColumn"`
 }
 
 // ParseConfig maps the incoming map to the [Config] and validates it.
@@ -58,6 +65,7 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		Config:           commonConfig,
 		BatchSize:        defaultBatchSize,
 		CopyExistingData: defaultCopyExistingData,
+		OrderingColumn:   defaultOrderingColumn,
 	}
 
 	// parse batch size if it's not empty
@@ -78,6 +86,11 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		}
 
 		sourceConfig.CopyExistingData = copyExisting
+	}
+
+	// set the orderingColumn if it's not empty
+	if orderingColumn := raw[ConfigKeyOrderingColumn]; orderingColumn != "" {
+		sourceConfig.OrderingColumn = orderingColumn
 	}
 
 	if err := validator.ValidateStruct(&sourceConfig); err != nil {
