@@ -35,7 +35,6 @@ const (
 // Writer implements a writer logic for Mongo destination.
 type Writer struct {
 	collection *mongo.Collection
-	table      string
 }
 
 // NewWriter creates new instance of the Writer.
