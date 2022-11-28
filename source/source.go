@@ -117,8 +117,8 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Required:    false,
 			Description: "The size of a document batch.",
 		},
-		ConfigKeyCopyExistingData: {
-			Default:  "true",
+		ConfigKeySnapshotMode: {
+			Default:  "initial",
 			Required: false,
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
@@ -162,11 +162,11 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
 
 	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
-		Collection:       collection,
-		BatchSize:        s.config.BatchSize,
-		CopyExistingData: s.config.CopyExistingData,
-		OrderingColumn:   s.config.OrderingColumn,
-		SDKPosition:      sdkPosition,
+		Collection:     collection,
+		BatchSize:      s.config.BatchSize,
+		Snapshot:       s.config.SnapshotMode == SnapshotModeInitial,
+		OrderingColumn: s.config.OrderingColumn,
+		SDKPosition:    sdkPosition,
 	})
 	if err != nil {
 		return fmt.Errorf("create cdc iterator: %w", err)

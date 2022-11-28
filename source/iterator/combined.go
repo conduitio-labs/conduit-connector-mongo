@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package iterator implements the CDC and Snapshot iterators for MongoDB.
+// Working with them is carried out through a combined iterator.
 package iterator
 
 import (
@@ -28,7 +30,7 @@ const metadataFieldCollection = "mongo.collection"
 
 // Combined is a combined iterator for MongoDB.
 // It consists of the cdc and snapshot iterators.
-// A snapshot is captured only if the copyExistingData is set to true.
+// A snapshot is captured only if the snapshot is set to true.
 type Combined struct {
 	snapshot   *snapshot
 	cdc        *cdc
@@ -37,11 +39,11 @@ type Combined struct {
 
 // CombinedParams is an incoming params for the [NewCombined] function.
 type CombinedParams struct {
-	Collection       *mongo.Collection
-	BatchSize        int
-	CopyExistingData bool
-	OrderingColumn   string
-	SDKPosition      sdk.Position
+	Collection     *mongo.Collection
+	BatchSize      int
+	Snapshot       bool
+	OrderingColumn string
+	SDKPosition    sdk.Position
 }
 
 // NewCombined creates a new instance of the [Combined].
@@ -56,10 +58,10 @@ func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) 
 	}
 
 	switch pos := position; {
-	case params.CopyExistingData && (pos == nil || pos.Mode == modeSnapshot):
+	case params.Snapshot && (pos == nil || pos.Mode == modeSnapshot):
 		combined.snapshot = newSnapshot(params.Collection, params.OrderingColumn, params.BatchSize, pos)
 
-	case !params.CopyExistingData || (pos != nil && pos.Mode == modeCDC):
+	case !params.Snapshot || (pos != nil && pos.Mode == modeCDC):
 		combined.cdc, err = newCDC(ctx, params.Collection, pos)
 		if err != nil {
 			return nil, fmt.Errorf("init cdc iterator: %w", err)
