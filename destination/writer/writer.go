@@ -24,6 +24,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+const (
+	// defaultIDFieldName contains default reserved primary key from MongoDB.
+	defaultIDFieldName = "_id"
+
+	// setCommand contains command, that used during Update query.
+	setCommand = "$set"
+)
+
+// Writer implements a writer logic for Mongo destination.
 type Writer struct {
 	db    *mongo.Collection
 	table string
@@ -54,7 +63,7 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 		w.delete,
 		w.insert,
 	); err != nil {
-		return fmt.Errorf("insert record error: %w", err)
+		return fmt.Errorf("route %s: %w", record.Operation.String(), err)
 	}
 
 	return nil
@@ -63,48 +72,38 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 func (w *Writer) Close(ctx context.Context) error {
 	err := w.db.Database().Client().Disconnect(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to close: %w", err)
+		return fmt.Errorf("close db: %w", err)
 	}
 
 	return nil
 }
 
-const (
-	// defaultIDFieldName contains default reserved primary key from MongoDB.
-	defaultIDFieldName = "_id"
-
-	// setCommand contains command, that used during Update query.
-	setCommand = "$set"
-)
-
 func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
-	// we are not using method parsePayload, because we need to save _id in payload during insert
-	// (it probably not appear in Key, and we need to handle that).
-	parsed := make(sdk.StructuredData)
-	if err := json.Unmarshal(record.Payload.After.Bytes(), &parsed); err != nil {
-		return fmt.Errorf("parse payload: %w", err)
+	payload := make(sdk.StructuredData)
+	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
+		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	if _, err := w.db.InsertOne(ctx, parsed); err != nil {
-		return fmt.Errorf("insert data into destination: %w", err)
+	if _, err := w.db.InsertOne(ctx, payload); err != nil {
+		return fmt.Errorf("insert data: %w", err)
 	}
 
 	return nil
 }
 
 func (w *Writer) update(ctx context.Context, record sdk.Record) error {
-	data, err := parsePayload(record)
+	payload, err := parsePayload(record)
 	if err != nil {
-		return fmt.Errorf("unable to parse payload in update: %w", err)
+		return fmt.Errorf("parse payload: %w", err)
 	}
 
 	ids, err := parseKeys(record)
 	if err != nil {
-		return fmt.Errorf("unable to parse key in update: %w", err)
+		return fmt.Errorf("parse keys: %w", err)
 	}
 
 	filter := generateBsonFromMap(ids)
-	body := generateBsonFromMap(data)
+	body := generateBsonFromMap(payload)
 
 	if _, err := w.db.UpdateOne(ctx,
 		filter,
@@ -113,7 +112,7 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 			Value: body,
 		}},
 	); err != nil {
-		return fmt.Errorf("upsert data into destination: %w", err)
+		return fmt.Errorf("update payload into destination: %w", err)
 	}
 
 	return nil
@@ -122,7 +121,7 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	ids, err := parseKeys(record)
 	if err != nil {
-		return fmt.Errorf("unable to parse key in update: %w", err)
+		return fmt.Errorf("parse keys: %w", err)
 	}
 
 	filter := generateBsonFromMap(ids)
@@ -130,7 +129,7 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	if _, err := w.db.DeleteOne(ctx,
 		filter,
 	); err != nil {
-		return fmt.Errorf("upsert data into destination: %w", err)
+		return fmt.Errorf("delete data from destination: %w", err)
 	}
 
 	return nil

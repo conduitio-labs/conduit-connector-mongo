@@ -22,6 +22,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// StringObjectIDCodec is an empty struct that is used for implementing bsoncodec.ValueEncoder interface.
 type StringObjectIDCodec struct{}
 
 // EncodeValue is the ValueEncoder for string types that tries to convert them into ObjectID.
