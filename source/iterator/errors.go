@@ -17,12 +17,15 @@ package iterator
 import "errors"
 
 var (
-	// ErrUnsupportedOperationType occurs when we got an unsupported operation type.
+	// ErrNoIterator occurs when the [Combined] has no any underlying iterators.
+	ErrNoIterator = errors.New("no iterator")
+
+	// errUnsupportedOperationType occurs when we got an unsupported operation type.
 	// This error shouldn't actually occur, as we filter Change Stream events by operation type.
 	// It's just a sentinel error for the [changeStreamEvent.toRecord] method.
-	ErrUnsupportedOperationType = errors.New("unsupported operation type")
+	errUnsupportedOperationType = errors.New("unsupported operation type")
 
-	// ErrNilSDKPosition occurs when trying to parse a nil [sdk.Position].
-	// It's just a sentinel error for the [ParsePosition] function.
-	ErrNilSDKPosition = errors.New("nil sdk position")
+	// errNilSDKPosition occurs when trying to parse a nil [sdk.Position].
+	// It's just a sentinel error for the [parsePosition] function.
+	errNilSDKPosition = errors.New("nil sdk position")
 )
