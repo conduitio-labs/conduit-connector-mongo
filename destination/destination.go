@@ -127,13 +127,7 @@ func (d *Destination) Open(ctx context.Context) error {
 		return fmt.Errorf("ping to mongo: %w", err)
 	}
 
-	d.writer, err = writer.NewWriter(ctx, writer.Params{
-		DB:    db.Database(d.config.DB).Collection(d.config.Collection),
-		Table: d.config.Collection,
-	})
-	if err != nil {
-		return fmt.Errorf("init writer: %w", err)
-	}
+	d.writer = writer.NewWriter(ctx, db.Database(d.config.DB).Collection(d.config.Collection))
 
 	return nil
 }

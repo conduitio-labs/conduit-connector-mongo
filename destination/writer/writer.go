@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	// defaultIDFieldName contains default reserved primary key from MongoDB.
-	defaultIDFieldName = "_id"
+	// idFieldName contains default reserved primary key from MongoDB.
+	idFieldName = "_id"
 
 	// setCommand contains command, that used during Update query.
 	setCommand = "$set"
@@ -34,45 +34,38 @@ const (
 
 // Writer implements a writer logic for Mongo destination.
 type Writer struct {
-	db    *mongo.Collection
-	table string
-}
-
-// Params is an incoming params for the NewWriter function.
-type Params struct {
-	DB    *mongo.Collection
-	Table string
+	collection *mongo.Collection
+	table      string
 }
 
 // NewWriter creates new instance of the Writer.
-func NewWriter(ctx context.Context, params Params) (*Writer, error) {
+func NewWriter(ctx context.Context, collection *mongo.Collection) *Writer {
 	writer := &Writer{
-		db:    params.DB,
-		table: params.Table,
+		collection: collection,
 	}
 
-	return writer, nil
+	return writer
 }
 
 // Write inserts a sdk.Record into a Destination.
 func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
-	if err := sdk.Util.Destination.Route(ctx,
-		record,
+	if err := sdk.Util.Destination.Route(ctx, record,
 		w.insert,
 		w.update,
 		w.delete,
 		w.insert,
 	); err != nil {
-		return fmt.Errorf("route %s: %w", record.Operation.String(), err)
+		return fmt.Errorf("route %s: %w", record.Operation, err)
 	}
 
 	return nil
 }
 
+// Close closes the underlying db connection.
 func (w *Writer) Close(ctx context.Context) error {
-	err := w.db.Database().Client().Disconnect(ctx)
+	err := w.collection.Database().Client().Disconnect(ctx)
 	if err != nil {
-		return fmt.Errorf("close db: %w", err)
+		return fmt.Errorf("close collection: %w", err)
 	}
 
 	return nil
@@ -84,7 +77,7 @@ func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	if _, err := w.db.InsertOne(ctx, payload); err != nil {
+	if _, err := w.collection.InsertOne(ctx, payload); err != nil {
 		return fmt.Errorf("insert data: %w", err)
 	}
 
@@ -105,7 +98,7 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 	filter := generateBsonFromMap(ids)
 	body := generateBsonFromMap(payload)
 
-	if _, err := w.db.UpdateOne(ctx,
+	if _, err := w.collection.UpdateOne(ctx,
 		filter,
 		bson.D{{
 			Key:   setCommand,
@@ -126,7 +119,7 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 
 	filter := generateBsonFromMap(ids)
 
-	if _, err := w.db.DeleteOne(ctx,
+	if _, err := w.collection.DeleteOne(ctx,
 		filter,
 	); err != nil {
 		return fmt.Errorf("delete data from destination: %w", err)
@@ -142,7 +135,7 @@ func parsePayload(data sdk.Record) (map[string]any, error) {
 		return nil, fmt.Errorf("parse payload: %w", err)
 	}
 
-	delete(parsed, defaultIDFieldName) // deleting key from payload arguments
+	delete(parsed, idFieldName) // deleting key from payload arguments
 
 	return parsed, nil
 }
