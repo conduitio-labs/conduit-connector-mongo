@@ -88,7 +88,7 @@ func TestDestination_Write_success(t *testing.T) {
 	ctx := context.Background()
 
 	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().InsertRecord(ctx, sdk.Record{}).Return(nil)
+	it.EXPECT().Write(ctx, sdk.Record{}).Return(nil)
 
 	d := Destination{
 		writer: it,
@@ -109,7 +109,7 @@ func TestDestination_Write_failInsertRecord(t *testing.T) {
 	ctx := context.Background()
 
 	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().InsertRecord(ctx, sdk.Record{}).Return(errors.New("insert record: fail"))
+	it.EXPECT().Write(ctx, sdk.Record{}).Return(errors.New("insert record: fail"))
 
 	d := Destination{
 		writer: it,
@@ -132,42 +132,4 @@ func TestDestination_Teardown_successWriterIsNil(t *testing.T) {
 
 	err := d.Teardown(ctx)
 	is.NoErr(err)
-}
-
-func TestDestination_Teardown_successWriterNotNil(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	ctrl := gomock.NewController(t)
-	ctx := context.Background()
-
-	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().Close(ctx).Return(nil)
-
-	d := Destination{
-		writer: it,
-	}
-
-	err := d.Teardown(ctx)
-	is.NoErr(err)
-}
-
-func TestDestination_Teardown_failure(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	ctrl := gomock.NewController(t)
-	ctx := context.Background()
-
-	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().Close(ctx).Return(errors.New("teardown: fail"))
-
-	d := Destination{
-		writer: it,
-	}
-
-	err := d.Teardown(ctx)
-	is.True(err != nil)
 }

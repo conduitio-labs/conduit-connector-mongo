@@ -35,21 +35,7 @@ func (m *MockWriter) EXPECT() *MockWriterMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockWriter) Close(ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Close indicates an expected call of Close.
-func (mr *MockWriterMockRecorder) Close(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockWriter)(nil).Close), ctx)
-}
-
-// InsertRecord mocks base method.
+// Write mocks base method.
 func (m *MockWriter) Write(ctx context.Context, record sdk.Record) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Write", ctx, record)
@@ -57,8 +43,8 @@ func (m *MockWriter) Write(ctx context.Context, record sdk.Record) error {
 	return ret0
 }
 
-// InsertRecord indicates an expected call of InsertRecord.
-func (mr *MockWriterMockRecorder) InsertRecord(ctx, record interface{}) *gomock.Call {
+// Write indicates an expected call of Write.
+func (mr *MockWriterMockRecorder) Write(ctx, record interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockWriter)(nil).Write), ctx, record)
 }
