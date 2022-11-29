@@ -50,6 +50,64 @@ const (
 	testNumberDataChange = 5678
 )
 
+func TestDestination_Write_snapshotSuccess(t *testing.T) {
+	is := is.New(t)
+
+	cfg := prepareConfig(t)
+
+	destination := NewDestination()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := destination.Configure(ctx, cfg)
+	is.NoErr(err)
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
+
+	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	is.NoErr(err)
+
+	t.Cleanup(func() {
+		err = destination.Teardown(ctx)
+		is.NoErr(err)
+	})
+
+	n, err := destination.Write(ctx, []sdk.Record{getTestSnapshot(t)})
+	is.NoErr(err)
+	is.Equal(n, 1)
+
+	c, err := col.CountDocuments(ctx, bson.D{})
+	is.NoErr(err)
+	is.Equal(c, int64(1))
+
+	res, err := col.Find(ctx, bson.M{})
+	res.Next(ctx)
+	var result map[string]any
+	err = res.Decode(&result)
+	is.NoErr(err)
+
+	id, ok := result[testIDFieldName].(primitive.ObjectID)
+	is.Equal(ok, true)
+
+	hex, err := primitive.ObjectIDFromHex(testID)
+	is.NoErr(err)
+
+	is.Equal(id, hex)
+
+	text, ok := result[testTextFieldName].(string)
+	is.Equal(ok, true)
+	is.Equal(text, testTextData)
+
+	num, ok := result[testNumberFieldName].(float64)
+	is.Equal(ok, true)
+	is.Equal(int(num), testNumberData)
+
+	_, err = col.DeleteMany(ctx, bson.M{})
+	is.NoErr(err)
+}
+
 func TestDestination_Write_insertSuccess(t *testing.T) {
 	is := is.New(t)
 
@@ -254,6 +312,21 @@ func getTestCreateRecord(t *testing.T) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordCreate(
+		nil, nil,
+		// in insert keys are not used, so we can omit it
+		nil,
+		sdk.StructuredData{
+			testIDFieldName:     testID, // we put it as string here, codec will translate it into ObjectID
+			testTextFieldName:   testTextData,
+			testNumberFieldName: testNumberData,
+		},
+	)
+}
+
+func getTestSnapshot(t *testing.T) sdk.Record {
+	t.Helper()
+
+	return sdk.Util.Source.NewRecordSnapshot(
 		nil, nil,
 		// in insert keys are not used, so we can omit it
 		nil,
