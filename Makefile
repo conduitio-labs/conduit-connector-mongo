@@ -1,6 +1,7 @@
 .PHONY: build test lint
 
-VERSION=$(shell git describe --tags --dirty --always)
+VERSION = $(shell git describe --tags --dirty --always)
+MONGODB_STARTUP_TIMEOUT ?= 4
 
 build:
 	go build -ldflags "-X 'github.com/conduitio-labs/conduit-connector-mongo.version=${VERSION}'" -o conduit-connector-mongo cmd/connector/main.go
