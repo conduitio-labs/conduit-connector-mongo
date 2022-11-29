@@ -46,7 +46,7 @@ func NewWriter(collection *mongo.Collection) *Writer {
 	return writer
 }
 
-// Write inserts a sdk.Record into a Destination.
+// Write writes a sdk.Record into a Destination.
 func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 	if err := sdk.Util.Destination.Route(ctx, record,
 		w.insert,
@@ -63,7 +63,7 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 	payload := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
-		return fmt.Errorf("unmarshal payload: %w", err)
+		return fmt.Errorf("parse payload: %w", err)
 	}
 
 	if _, err := w.collection.InsertOne(ctx, bson.M(payload)); err != nil {

@@ -149,9 +149,9 @@ func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, err
 
 // Teardown gracefully closes connections.
 func (d *Destination) Teardown(ctx context.Context) error {
-	if d.writer != nil {
+	if d.client != nil {
 		if err := d.client.Disconnect(ctx); err != nil {
-			return fmt.Errorf("close writer: %w", err)
+			return fmt.Errorf("client disconnect: %w", err)
 		}
 	}
 
