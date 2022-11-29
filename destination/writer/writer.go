@@ -86,16 +86,7 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 		return fmt.Errorf("parse keys: %w", err)
 	}
 
-	filter := generateBsonFromMap(keys)
-	body := generateBsonFromMap(payload)
-
-	if _, err := w.collection.UpdateOne(ctx,
-		filter,
-		bson.D{{
-			Key:   setCommand,
-			Value: body,
-		}},
-	); err != nil {
+	if _, err := w.collection.UpdateOne(ctx, bson.M(keys), bson.M{setCommand: bson.M(payload)}); err != nil {
 		return fmt.Errorf("update one: %w", err)
 	}
 
@@ -108,26 +99,9 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 		return fmt.Errorf("parse keys: %w", err)
 	}
 
-	filter := generateBsonFromMap(keys)
-
-	if _, err := w.collection.DeleteOne(ctx,
-		filter,
-	); err != nil {
-		return fmt.Errorf("delete data from destination: %w", err)
+	if _, err := w.collection.DeleteOne(ctx, bson.M(keys)); err != nil {
+		return fmt.Errorf("delete one: %w", err)
 	}
 
 	return nil
-}
-
-// generateBsonFromMap generates bson.D object from map[string]any data.
-func generateBsonFromMap(m map[string]any) bson.D {
-	res := make(bson.D, 0, len(m))
-	for i, v := range m {
-		res = append(res, bson.E{
-			Key:   i,
-			Value: v,
-		})
-	}
-
-	return res
 }

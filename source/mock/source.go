@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	conduit_connector_sdk "github.com/conduitio/conduit-connector-sdk"
+	sdk "github.com/conduitio/conduit-connector-sdk"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -51,10 +51,10 @@ func (mr *MockIteratorMockRecorder) HasNext(arg0 interface{}) *gomock.Call {
 }
 
 // Next mocks base method.
-func (m *MockIterator) Next(arg0 context.Context) (conduit_connector_sdk.Record, error) {
+func (m *MockIterator) Next(arg0 context.Context) (sdk.Record, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Next", arg0)
-	ret0, _ := ret[0].(conduit_connector_sdk.Record)
+	ret0, _ := ret[0].(sdk.Record)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
