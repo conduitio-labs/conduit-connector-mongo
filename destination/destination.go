@@ -140,7 +140,7 @@ func (d *Destination) Open(ctx context.Context) error {
 func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, error) {
 	for i, record := range records {
 		if err := d.writer.Write(ctx, record); err != nil {
-			return i, fmt.Errorf("insert record: %w", err)
+			return i, fmt.Errorf("write record: %w", err)
 		}
 	}
 
