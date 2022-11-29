@@ -17,6 +17,7 @@ package writer
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -31,6 +32,9 @@ const (
 	// setCommand contains command, that used during Update query.
 	setCommand = "$set"
 )
+
+// ErrEmptyKey occurs when a record has an empty key and an operation is update or delete.
+var ErrEmptyKey = errors.New("empty key")
 
 // Writer implements a writer logic for Mongo destination.
 type Writer struct {
@@ -85,6 +89,9 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("parse keys: %w", err)
 	}
+	if len(keys) == 0 {
+		return ErrEmptyKey
+	}
 
 	if _, err := w.collection.UpdateOne(ctx, bson.M(keys), bson.M{setCommand: bson.M(payload)}); err != nil {
 		return fmt.Errorf("update one: %w", err)
@@ -97,6 +104,9 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	keys := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("parse keys: %w", err)
+	}
+	if len(keys) == 0 {
+		return ErrEmptyKey
 	}
 
 	if _, err := w.collection.DeleteOne(ctx, bson.M(keys)); err != nil {
