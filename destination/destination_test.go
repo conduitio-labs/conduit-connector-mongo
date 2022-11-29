@@ -17,6 +17,7 @@ package destination
 import (
 	"context"
 	"errors"
+	"net/url"
 	"testing"
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -42,7 +43,10 @@ func TestDestination_Configure_success(t *testing.T) {
 	is.NoErr(err)
 
 	is.Equal(d.config, config.Config{
-		URI:        "mongodb://localhost:27017",
+		URI: &url.URL{
+			Scheme: "mongodb",
+			Host:   "localhost:27017",
+		},
 		DB:         "test",
 		Collection: "users",
 	})
@@ -71,12 +75,12 @@ func TestDestination_Configure_structValidateFailure(t *testing.T) {
 
 	d := Destination{}
 	err := d.Configure(context.Background(), map[string]string{
-		config.KeyURI:        "mon//bad:uri//godb://localhost:27017",
+		config.KeyURI:        "mong\\'odb://localhost:27017",
 		config.KeyDB:         "test",
 		config.KeyCollection: "users",
 	})
 
-	is.Equal(err.Error(), "parse config: validate struct: \"uri\" value must be a valid URI")
+	is.True(err != nil)
 }
 
 func TestDestination_Write_success(t *testing.T) {
