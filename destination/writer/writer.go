@@ -38,7 +38,7 @@ type Writer struct {
 }
 
 // NewWriter creates new instance of the Writer.
-func NewWriter(ctx context.Context, collection *mongo.Collection) *Writer {
+func NewWriter(collection *mongo.Collection) *Writer {
 	writer := &Writer{
 		collection: collection,
 	}
@@ -60,41 +60,33 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 	return nil
 }
 
-// Close closes the underlying db connection.
-func (w *Writer) Close(ctx context.Context) error {
-	err := w.collection.Database().Client().Disconnect(ctx)
-	if err != nil {
-		return fmt.Errorf("close collection: %w", err)
-	}
-
-	return nil
-}
-
 func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 	payload := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	if _, err := w.collection.InsertOne(ctx, payload); err != nil {
-		return fmt.Errorf("insert data: %w", err)
+	if _, err := w.collection.InsertOne(ctx, bson.M(payload)); err != nil {
+		return fmt.Errorf("insert one: %w", err)
 	}
 
 	return nil
 }
 
 func (w *Writer) update(ctx context.Context, record sdk.Record) error {
-	payload, err := parsePayload(record)
-	if err != nil {
+	payload := make(sdk.StructuredData)
+	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
 		return fmt.Errorf("parse payload: %w", err)
 	}
 
-	ids, err := parseKeys(record)
-	if err != nil {
+	delete(payload, idFieldName) // deleting key from payload arguments
+
+	keys := make(sdk.StructuredData)
+	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("parse keys: %w", err)
 	}
 
-	filter := generateBsonFromMap(ids)
+	filter := generateBsonFromMap(keys)
 	body := generateBsonFromMap(payload)
 
 	if _, err := w.collection.UpdateOne(ctx,
@@ -104,19 +96,19 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 			Value: body,
 		}},
 	); err != nil {
-		return fmt.Errorf("update payload into destination: %w", err)
+		return fmt.Errorf("update one: %w", err)
 	}
 
 	return nil
 }
 
 func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
-	ids, err := parseKeys(record)
-	if err != nil {
+	keys := make(sdk.StructuredData)
+	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("parse keys: %w", err)
 	}
 
-	filter := generateBsonFromMap(ids)
+	filter := generateBsonFromMap(keys)
 
 	if _, err := w.collection.DeleteOne(ctx,
 		filter,
@@ -125,28 +117,6 @@ func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	}
 
 	return nil
-}
-
-// parsePayload is parsing Payload.After from record and deleting key from payload (we using it from Key field).
-func parsePayload(data sdk.Record) (map[string]any, error) {
-	parsed := make(sdk.StructuredData)
-	if err := json.Unmarshal(data.Payload.After.Bytes(), &parsed); err != nil {
-		return nil, fmt.Errorf("parse payload: %w", err)
-	}
-
-	delete(parsed, idFieldName) // deleting key from payload arguments
-
-	return parsed, nil
-}
-
-// parseKeys extracts key fields from record trying to convert them to ObjectID type.
-func parseKeys(data sdk.Record) (sdk.StructuredData, error) {
-	parsed := make(sdk.StructuredData)
-	if err := json.Unmarshal(data.Key.Bytes(), &parsed); err != nil {
-		return nil, fmt.Errorf("parse payload: %w", err)
-	}
-
-	return parsed, nil
 }
 
 // generateBsonFromMap generates bson.D object from map[string]any data.

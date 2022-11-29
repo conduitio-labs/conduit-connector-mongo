@@ -27,10 +27,14 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
+// registry registers StringObjectIDCodec.
+var registry = bson.NewRegistryBuilder().
+	RegisterDefaultEncoder(reflect.String, writer.StringObjectIDCodec{}).
+	Build()
+
 // Writer defines a writer interface needed for the [Destination].
 type Writer interface {
 	Write(ctx context.Context, record sdk.Record) error
-	Close(ctx context.Context) error
 }
 
 // Destination Mongo Connector persists records to a MongoDB.
@@ -38,6 +42,7 @@ type Destination struct {
 	sdk.UnimplementedDestination
 
 	writer Writer
+	client *mongo.Client
 	config config.Config
 }
 
@@ -111,23 +116,21 @@ func (d *Destination) Configure(ctx context.Context, cfg map[string]string) erro
 	return nil
 }
 
-// registry registers StringObjectIDCodec.
-var registry = bson.NewRegistryBuilder().RegisterDefaultEncoder(reflect.String, writer.StringObjectIDCodec{}).Build()
-
 // Open makes sure everything is prepared to receive records.
 func (d *Destination) Open(ctx context.Context) error {
-	db, err := mongo.Connect(ctx, d.config.GetClientOptions().
+	client, err := mongo.Connect(ctx, d.config.GetClientOptions().
 		SetRegistry(registry))
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}
 
-	err = db.Ping(ctx, nil)
+	err = client.Ping(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("ping to mongo: %w", err)
 	}
 
-	d.writer = writer.NewWriter(ctx, db.Database(d.config.DB).Collection(d.config.Collection))
+	d.client = client
+	d.writer = writer.NewWriter(client.Database(d.config.DB).Collection(d.config.Collection))
 
 	return nil
 }
@@ -146,7 +149,7 @@ func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, err
 // Teardown gracefully closes connections.
 func (d *Destination) Teardown(ctx context.Context) error {
 	if d.writer != nil {
-		if err := d.writer.Close(ctx); err != nil {
+		if err := d.client.Disconnect(ctx); err != nil {
 			return fmt.Errorf("close writer: %w", err)
 		}
 	}
