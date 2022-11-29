@@ -117,8 +117,8 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Required:    false,
 			Description: "The size of a document batch.",
 		},
-		ConfigKeySnapshotMode: {
-			Default:  "initial",
+		ConfigKeySnapshot: {
+			Default:  "true",
 			Required: false,
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
@@ -164,7 +164,7 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
 		Collection:     collection,
 		BatchSize:      s.config.BatchSize,
-		Snapshot:       s.config.SnapshotMode == SnapshotModeInitial,
+		Snapshot:       s.config.Snapshot,
 		OrderingColumn: s.config.OrderingColumn,
 		SDKPosition:    sdkPosition,
 	})

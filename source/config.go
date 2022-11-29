@@ -17,7 +17,6 @@ package source
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
@@ -26,8 +25,8 @@ import (
 const (
 	// defaultBatchSize is the default value for the batchSize field.
 	defaultBatchSize = 1000
-	// defaultSnapshotMode is the default value for the snapshotMode field.
-	defaultSnapshotMode = SnapshotModeInitial
+	// defaultSnapshot is the default value for the snapshot field.
+	defaultSnapshot = true
 	// defaultOrderingColumn is the default value for the orderingColumn field.
 	defaultOrderingColumn = "_id"
 )
@@ -35,30 +34,11 @@ const (
 const (
 	// ConfigKeyBatchSize is a config name for a batch size.
 	ConfigKeyBatchSize = "batchSize"
-	// ConfigKeySnapshotMode is a config name for a snapshotMode field.
-	ConfigKeySnapshotMode = "snapshotMode"
+	// ConfigKeySnapshot is a config name for a snapshot field.
+	ConfigKeySnapshot = "snapshot"
 	// ConfigKeyOrderingColumn is a config name for a orderingColumn field.
 	ConfigKeyOrderingColumn = "orderingColumn"
 )
-
-// SnapshotMode defines a snapshot mode.
-type SnapshotMode string
-
-// The available snapshot modes are listed below.
-const (
-	SnapshotModeInitial SnapshotMode = "initial"
-	SnapshotModeNever   SnapshotMode = "never"
-)
-
-// IsValid checks if the underlying [SnapshotMode] is valid.
-func (sm SnapshotMode) IsValid() bool {
-	switch sm {
-	case SnapshotModeInitial, SnapshotModeNever:
-		return true
-	}
-
-	return false
-}
 
 // Config contains source-specific configurable values.
 type Config struct {
@@ -66,9 +46,9 @@ type Config struct {
 
 	// BatchSize is the size of a document batch.
 	BatchSize int `key:"batchSize" validate:"gte=1,lte=100000"`
-	// SnapshotMode determines whether or not the connector will take a snapshot
+	// Snapshot determines whether or not the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
-	SnapshotMode SnapshotMode `key:"snapshotMode"`
+	Snapshot bool `key:"snapshot"`
 	// OrderingColumn is the name of a field that is used for ordering
 	// collection elements when capturing a snapshot.
 	OrderingColumn string `key:"orderingColumn"`
@@ -84,7 +64,7 @@ func ParseConfig(raw map[string]string) (Config, error) {
 	sourceConfig := Config{
 		Config:         commonConfig,
 		BatchSize:      defaultBatchSize,
-		SnapshotMode:   defaultSnapshotMode,
+		Snapshot:       defaultSnapshot,
 		OrderingColumn: defaultOrderingColumn,
 	}
 
@@ -98,15 +78,14 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		sourceConfig.BatchSize = batchSize
 	}
 
-	// parse snapshotMode if it's not empty
-	if raw[ConfigKeySnapshotMode] != "" {
-		snapshotMode := SnapshotMode(strings.ToLower(raw[ConfigKeySnapshotMode]))
-
-		if !snapshotMode.IsValid() {
-			return Config{}, fmt.Errorf("invalid snapshot mode %q", snapshotMode)
+	// parse snapshot if it's not empty
+	if snapshotStr := raw[ConfigKeySnapshot]; snapshotStr != "" {
+		snapshot, err := strconv.ParseBool(snapshotStr)
+		if err != nil {
+			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeySnapshot, err)
 		}
 
-		sourceConfig.SnapshotMode = snapshotMode
+		sourceConfig.Snapshot = snapshot
 	}
 
 	// set the orderingColumn if it's not empty
