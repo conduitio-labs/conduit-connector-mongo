@@ -70,6 +70,9 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
+		err = col.Drop(context.Background())
+		is.NoErr(err)
+
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
@@ -128,6 +131,9 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
+		err = col.Drop(context.Background())
+		is.NoErr(err)
+
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
@@ -186,6 +192,9 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
+		err = col.Drop(context.Background())
+		is.NoErr(err)
+
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
@@ -244,6 +253,9 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
+		err = col.Drop(context.Background())
+		is.NoErr(err)
+
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
@@ -279,6 +291,9 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
+		err = col.Drop(context.Background())
+		is.NoErr(err)
+
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
