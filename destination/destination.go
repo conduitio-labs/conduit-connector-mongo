@@ -23,13 +23,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
 // registry registers StringObjectIDCodec.
 var registry = bson.NewRegistryBuilder().
-	RegisterDefaultEncoder(reflect.String, writer.StringObjectIDCodec{}).
+	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
 	Build()
 
 // Writer defines a writer interface needed for the [Destination].
