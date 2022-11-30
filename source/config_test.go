@@ -15,6 +15,7 @@
 package source
 
 import (
+	"net/url"
 	"reflect"
 	"testing"
 
@@ -39,12 +40,16 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
-				BatchSize:        defaultBatchSize,
-				CopyExistingData: defaultCopyExistingData,
+				BatchSize:      defaultBatchSize,
+				Snapshot:       defaultSnapshot,
+				OrderingColumn: defaultOrderingColumn,
 			},
 			wantErr: false,
 		},
@@ -58,39 +63,69 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
-				BatchSize:        100,
-				CopyExistingData: defaultCopyExistingData,
+				BatchSize:      100,
+				Snapshot:       defaultSnapshot,
+				OrderingColumn: defaultOrderingColumn,
 			},
 			wantErr: false,
 		},
 		{
-			name: "success_custom_copy_existing",
+			name: "success_custom_snapshot_mode",
 			raw: map[string]string{
-				config.KeyURI:             "mongodb://localhost:27017",
-				config.KeyDB:              "test",
-				config.KeyCollection:      "users",
-				ConfigKeyCopyExistingData: "false",
+				config.KeyURI:        "mongodb://localhost:27017",
+				config.KeyDB:         "test",
+				config.KeyCollection: "users",
+				ConfigKeySnapshot:    "false",
 			},
 			want: Config{
 				Config: config.Config{
-					URI:        "mongodb://localhost:27017",
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
 					DB:         "test",
 					Collection: "users",
 				},
-				BatchSize:        defaultBatchSize,
-				CopyExistingData: false,
+				BatchSize:      defaultBatchSize,
+				Snapshot:       false,
+				OrderingColumn: defaultOrderingColumn,
+			},
+			wantErr: false,
+		},
+		{
+			name: "success_custom_ordering_column",
+			raw: map[string]string{
+				config.KeyURI:           "mongodb://localhost:27017",
+				config.KeyDB:            "test",
+				config.KeyCollection:    "users",
+				ConfigKeyOrderingColumn: "created_at",
+			},
+			want: Config{
+				Config: config.Config{
+					URI: &url.URL{
+						Scheme: "mongodb",
+						Host:   "localhost:27017",
+					},
+					DB:         "test",
+					Collection: "users",
+				},
+				BatchSize:      defaultBatchSize,
+				Snapshot:       defaultSnapshot,
+				OrderingColumn: "created_at",
 			},
 			wantErr: false,
 		},
 		{
 			name: "fail_invalid_common_config_missing_required",
 			raw: map[string]string{
-				config.KeyDB:         "test",
-				config.KeyCollection: "users",
+				config.KeyDB: "test",
 			},
 			want:    Config{},
 			wantErr: true,
@@ -129,12 +164,12 @@ func TestParseConfig(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "fail_invalid_copy_existing",
+			name: "fail_invalid_snapshot_mode",
 			raw: map[string]string{
-				config.KeyURI:             "mongodb://localhost:27017",
-				config.KeyDB:              "test",
-				config.KeyCollection:      "users",
-				ConfigKeyCopyExistingData: "no",
+				config.KeyURI:        "mongodb://localhost:27017",
+				config.KeyDB:         "test",
+				config.KeyCollection: "users",
+				ConfigKeySnapshot:    "no",
 			},
 			want:    Config{},
 			wantErr: true,

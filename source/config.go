@@ -25,15 +25,19 @@ import (
 const (
 	// defaultBatchSize is the default value for the batchSize field.
 	defaultBatchSize = 1000
-	// defaultCopyExistingData is the default value for the copyExistingData field.
-	defaultCopyExistingData = true
+	// defaultSnapshot is the default value for the snapshot field.
+	defaultSnapshot = true
+	// defaultOrderingColumn is the default value for the orderingColumn field.
+	defaultOrderingColumn = "_id"
 )
 
 const (
 	// ConfigKeyBatchSize is a config name for a batch size.
 	ConfigKeyBatchSize = "batchSize"
-	// ConfigKeyCopyExistingData is a config name for a copyExistingData field.
-	ConfigKeyCopyExistingData = "copyExistingData"
+	// ConfigKeySnapshot is a config name for a snapshot field.
+	ConfigKeySnapshot = "snapshot"
+	// ConfigKeyOrderingColumn is a config name for a orderingColumn field.
+	ConfigKeyOrderingColumn = "orderingColumn"
 )
 
 // Config contains source-specific configurable values.
@@ -42,9 +46,12 @@ type Config struct {
 
 	// BatchSize is the size of a document batch.
 	BatchSize int `key:"batchSize" validate:"gte=1,lte=100000"`
-	// CopyExistingData determines whether or not the connector will take a snapshot
+	// Snapshot determines whether or not the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
-	CopyExistingData bool `key:"copyExistingData"`
+	Snapshot bool `key:"snapshot"`
+	// OrderingColumn is the name of a field that is used for ordering
+	// collection elements when capturing a snapshot.
+	OrderingColumn string `key:"orderingColumn"`
 }
 
 // ParseConfig maps the incoming map to the [Config] and validates it.
@@ -55,9 +62,10 @@ func ParseConfig(raw map[string]string) (Config, error) {
 	}
 
 	sourceConfig := Config{
-		Config:           commonConfig,
-		BatchSize:        defaultBatchSize,
-		CopyExistingData: defaultCopyExistingData,
+		Config:         commonConfig,
+		BatchSize:      defaultBatchSize,
+		Snapshot:       defaultSnapshot,
+		OrderingColumn: defaultOrderingColumn,
 	}
 
 	// parse batch size if it's not empty
@@ -70,14 +78,19 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		sourceConfig.BatchSize = batchSize
 	}
 
-	// parse copyExistingData if it's not empty
-	if copyExistingDataStr := raw[ConfigKeyCopyExistingData]; copyExistingDataStr != "" {
-		copyExisting, err := strconv.ParseBool(copyExistingDataStr)
+	// parse snapshot if it's not empty
+	if snapshotStr := raw[ConfigKeySnapshot]; snapshotStr != "" {
+		snapshot, err := strconv.ParseBool(snapshotStr)
 		if err != nil {
-			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeyCopyExistingData, err)
+			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeySnapshot, err)
 		}
 
-		sourceConfig.CopyExistingData = copyExisting
+		sourceConfig.Snapshot = snapshot
+	}
+
+	// set the orderingColumn if it's not empty
+	if orderingColumn := raw[ConfigKeyOrderingColumn]; orderingColumn != "" {
+		sourceConfig.OrderingColumn = orderingColumn
 	}
 
 	if err := validator.ValidateStruct(&sourceConfig); err != nil {

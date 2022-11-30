@@ -67,7 +67,7 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 	payload := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
-		return fmt.Errorf("parse payload: %w", err)
+		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
 	if _, err := w.collection.InsertOne(ctx, bson.M(payload)); err != nil {
@@ -80,14 +80,14 @@ func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 	payload := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
-		return fmt.Errorf("parse payload: %w", err)
+		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
 	delete(payload, idFieldName) // deleting key from payload arguments
 
 	keys := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
-		return fmt.Errorf("parse keys: %w", err)
+		return fmt.Errorf("unmarshal keys: %w", err)
 	}
 	if len(keys) == 0 {
 		return ErrEmptyKey
@@ -103,7 +103,7 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
 	keys := make(sdk.StructuredData)
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
-		return fmt.Errorf("parse keys: %w", err)
+		return fmt.Errorf("unmarshal keys: %w", err)
 	}
 	if len(keys) == 0 {
 		return ErrEmptyKey

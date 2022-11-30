@@ -18,13 +18,26 @@ package source
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// bsoncodec.RegistryBuilder allows us to specify the logic of
+// decoding/encoding certain BSON types, that will be performed
+// inside the MongoDB Go driver.
+//
+// In this particular case we convert bson.ObjectID to string
+// when unmarshaling a raw BSON element to map[string]any.
+var registry = bson.NewRegistryBuilder().
+	RegisterTypeMapEntry(bsontype.ObjectID, reflect.TypeOf(string(""))).
+	Build()
 
 // Iterator defines an Iterator interface needed for the [Source].
 type Iterator interface {
@@ -48,11 +61,13 @@ func NewSource() sdk.Source {
 }
 
 // Parameters is a map of named Parameters that describe how to configure the [Source].
+//
+//nolint:funlen // yeah, this function can become long at some point.
 func (s *Source) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
-			Default:  "",
-			Required: true,
+			Default:  "mongodb://localhost:27017",
+			Required: false,
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
@@ -102,11 +117,17 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Required:    false,
 			Description: "The size of a document batch.",
 		},
-		ConfigKeyCopyExistingData: {
+		ConfigKeySnapshot: {
 			Default:  "true",
 			Required: false,
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
+		},
+		ConfigKeyOrderingColumn: {
+			Default:  "_id",
+			Required: false,
+			Description: "The name of a field that is used for ordering " +
+				"collection elements when capturing a snapshot.",
 		},
 	}
 }
@@ -125,20 +146,31 @@ func (s *Source) Configure(ctx context.Context, raw map[string]string) error {
 }
 
 // Open opens needed connections and prepares to start producing records.
-func (s *Source) Open(ctx context.Context, position sdk.Position) error {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(s.config.URI))
+func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
+	opts := options.Client().ApplyURI(s.config.URI.String()).SetRegistry(registry)
+
+	var err error
+	s.client, err = mongo.Connect(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}
 
-	if err := client.Ping(ctx, nil); err != nil {
+	if err = s.client.Ping(ctx, nil); err != nil {
 		return fmt.Errorf("ping mongo server: %w", err)
 	}
 
-	collection := client.Database(s.config.DB).Collection(s.config.Collection)
+	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
 
-	s.client = client
-	s.iterator = iterator.NewSnapshot(collection)
+	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
+		Collection:     collection,
+		BatchSize:      s.config.BatchSize,
+		Snapshot:       s.config.Snapshot,
+		OrderingColumn: s.config.OrderingColumn,
+		SDKPosition:    sdkPosition,
+	})
+	if err != nil {
+		return fmt.Errorf("create cdc iterator: %w", err)
+	}
 
 	return nil
 }
