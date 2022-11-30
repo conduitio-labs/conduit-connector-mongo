@@ -32,43 +32,45 @@ const metadataFieldCollection = "mongo.collection"
 // It consists of the cdc and snapshot iterators.
 // A snapshot is captured only if the snapshot is set to true.
 type Combined struct {
-	snapshot   *snapshot
-	cdc        *cdc
-	collection *mongo.Collection
+	snapshot *snapshot
+	cdc      *cdc
 }
 
 // CombinedParams is an incoming params for the [NewCombined] function.
 type CombinedParams struct {
-	Collection     *mongo.Collection
-	BatchSize      int
-	Snapshot       bool
-	OrderingColumn string
-	SDKPosition    sdk.Position
+	Collection    *mongo.Collection
+	BatchSize     int
+	Snapshot      bool
+	OrderingField string
+	SDKPosition   sdk.Position
 }
 
 // NewCombined creates a new instance of the [Combined].
 func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) {
-	combined := &Combined{
-		collection: params.Collection,
-	}
+	combined := &Combined{}
 
 	position, err := parsePosition(params.SDKPosition)
 	if err != nil && !errors.Is(err, errNilSDKPosition) {
 		return nil, fmt.Errorf("parse sdk position: %w", err)
 	}
 
-	switch pos := position; {
-	case params.Snapshot && (pos == nil || pos.Mode == modeSnapshot):
-		combined.snapshot = newSnapshot(params.Collection, params.OrderingColumn, params.BatchSize, pos)
-
-	case !params.Snapshot || (pos != nil && pos.Mode == modeCDC):
-		combined.cdc, err = newCDC(ctx, params.Collection, pos)
+	if params.Snapshot && (position == nil || position.Mode == modeSnapshot) {
+		combined.snapshot, err = newSnapshot(ctx, snapshotParams{
+			collection:    params.Collection,
+			orderingField: params.OrderingField,
+			batchSize:     params.BatchSize,
+			position:      position,
+		})
 		if err != nil {
-			return nil, fmt.Errorf("init cdc iterator: %w", err)
+			return nil, fmt.Errorf("init snapshot iterator: %w", err)
 		}
+	}
 
-	default:
-		return nil, fmt.Errorf("invalid position mode %q", pos.Mode)
+	// create the CDC iterator in any case in order to properly
+	// switch after the snapshot and start consuming events starting from the current time
+	combined.cdc, err = newCDC(ctx, params.Collection, position)
+	if err != nil {
+		return nil, fmt.Errorf("init cdc iterator: %w", err)
 	}
 
 	return combined, nil
@@ -85,9 +87,10 @@ func (c *Combined) HasNext(ctx context.Context) (bool, error) {
 		}
 
 		if !hasNext {
-			if err := c.switchToCDC(ctx); err != nil {
-				return false, fmt.Errorf("switch to cdc mode: %w", err)
+			if err := c.snapshot.stop(ctx); err != nil {
+				return false, fmt.Errorf("stop snapshot iterator: %w", err)
 			}
+			c.snapshot = nil
 
 			return c.cdc.hasNext(ctx)
 		}
@@ -131,25 +134,6 @@ func (c *Combined) Stop(ctx context.Context) error {
 			return fmt.Errorf("stop cdc: %w", err)
 		}
 	}
-
-	return nil
-}
-
-// switchToCDCIterator initializes the cdc iterator, and set the snapshot to nil.
-func (c *Combined) switchToCDC(ctx context.Context) error {
-	// start CDC with nil position in order to listen to new changes
-	cdc, err := newCDC(ctx, c.collection, nil)
-	if err != nil {
-		return fmt.Errorf("init cdc iterator: %w", err)
-	}
-
-	c.cdc = cdc
-
-	if err := c.snapshot.stop(ctx); err != nil {
-		return fmt.Errorf("stop snapshot iterator: %w", err)
-	}
-
-	c.snapshot = nil
 
 	return nil
 }

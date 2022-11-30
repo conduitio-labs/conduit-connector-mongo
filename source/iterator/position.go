@@ -42,7 +42,11 @@ type position struct {
 	ResumeToken bson.Raw `json:"resumeToken,omitempty"`
 	// Element is a value of the last processed element by the snapshot capture.
 	// This value is used if the mode is snapshot.
-	Element any `json:"string,omitempty"`
+	Element any `json:"element,omitempty"`
+	// MaxElement is a max value of an ordering field
+	// at the start of a snapshot.
+	// This value is used if the mode is snapshot.
+	MaxElement any `json:"maxElement,omitempty"`
 }
 
 // marshalSDKPosition marshals the underlying [position] into a [sdk.Position] as JSON bytes.

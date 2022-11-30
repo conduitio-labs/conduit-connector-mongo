@@ -50,9 +50,9 @@ func TestSource_Configure_success(t *testing.T) {
 			DB:         "test",
 			Collection: "users",
 		},
-		BatchSize:      defaultBatchSize,
-		Snapshot:       defaultSnapshot,
-		OrderingColumn: defaultOrderingColumn,
+		BatchSize:     defaultBatchSize,
+		Snapshot:      defaultSnapshot,
+		OrderingField: defaultOrderingField,
 	})
 }
 

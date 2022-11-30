@@ -27,8 +27,8 @@ const (
 	defaultBatchSize = 1000
 	// defaultSnapshot is the default value for the snapshot field.
 	defaultSnapshot = true
-	// defaultOrderingColumn is the default value for the orderingColumn field.
-	defaultOrderingColumn = "_id"
+	// defaultOrderingField is the default value for the orderingField field.
+	defaultOrderingField = "_id"
 )
 
 const (
@@ -36,8 +36,8 @@ const (
 	ConfigKeyBatchSize = "batchSize"
 	// ConfigKeySnapshot is a config name for a snapshot field.
 	ConfigKeySnapshot = "snapshot"
-	// ConfigKeyOrderingColumn is a config name for a orderingColumn field.
-	ConfigKeyOrderingColumn = "orderingColumn"
+	// ConfigKeyOrderingField is a config name for a orderingField field.
+	ConfigKeyOrderingField = "orderingField"
 )
 
 // Config contains source-specific configurable values.
@@ -49,9 +49,9 @@ type Config struct {
 	// Snapshot determines whether or not the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
 	Snapshot bool `key:"snapshot"`
-	// OrderingColumn is the name of a field that is used for ordering
+	// OrderingField is the name of a field that is used for ordering
 	// collection elements when capturing a snapshot.
-	OrderingColumn string `key:"orderingColumn"`
+	OrderingField string `key:"orderingField"`
 }
 
 // ParseConfig maps the incoming map to the [Config] and validates it.
@@ -62,10 +62,10 @@ func ParseConfig(raw map[string]string) (Config, error) {
 	}
 
 	sourceConfig := Config{
-		Config:         commonConfig,
-		BatchSize:      defaultBatchSize,
-		Snapshot:       defaultSnapshot,
-		OrderingColumn: defaultOrderingColumn,
+		Config:        commonConfig,
+		BatchSize:     defaultBatchSize,
+		Snapshot:      defaultSnapshot,
+		OrderingField: defaultOrderingField,
 	}
 
 	// parse batch size if it's not empty
@@ -88,9 +88,9 @@ func ParseConfig(raw map[string]string) (Config, error) {
 		sourceConfig.Snapshot = snapshot
 	}
 
-	// set the orderingColumn if it's not empty
-	if orderingColumn := raw[ConfigKeyOrderingColumn]; orderingColumn != "" {
-		sourceConfig.OrderingColumn = orderingColumn
+	// set the orderingField if it's not empty
+	if orderingField := raw[ConfigKeyOrderingField]; orderingField != "" {
+		sourceConfig.OrderingField = orderingField
 	}
 
 	if err := validator.ValidateStruct(&sourceConfig); err != nil {
