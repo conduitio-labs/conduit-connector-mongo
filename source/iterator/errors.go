@@ -28,4 +28,10 @@ var (
 	// errNilSDKPosition occurs when trying to parse a nil [sdk.Position].
 	// It's just a sentinel error for the [parsePosition] function.
 	errNilSDKPosition = errors.New("nil sdk position")
+
+	// errMaxFieldValueNotFound occurs when it's impossible to find the maximum value of a field.
+	errMaxFieldValueNotFound = errors.New("max field value not found")
+
+	// errNoDocuments occurs when there're no documents in a collection.
+	errNoDocuments = errors.New("no documents")
 )

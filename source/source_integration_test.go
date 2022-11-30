@@ -52,9 +52,6 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	err := source.Configure(ctx, sourceConfig)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
-	is.NoErr(err)
-
 	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
 	is.NoErr(err)
 	t.Cleanup(func() {
@@ -75,6 +72,9 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	testItem, err := createTestItem(ctx, testCollection)
 	is.NoErr(err)
 
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationSnapshot)
@@ -93,9 +93,6 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	defer cancel()
 
 	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
-
-	err = source.Open(ctx, nil)
 	is.NoErr(err)
 
 	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
@@ -119,6 +116,9 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	is.NoErr(err)
 
 	secondTestItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
 	is.NoErr(err)
 
 	// check the first item
