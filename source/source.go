@@ -123,7 +123,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
 		},
-		ConfigKeyOrderingColumn: {
+		ConfigKeyOrderingField: {
 			Default:  "_id",
 			Required: false,
 			Description: "The name of a field that is used for ordering " +
@@ -162,14 +162,14 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
 
 	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
-		Collection:     collection,
-		BatchSize:      s.config.BatchSize,
-		Snapshot:       s.config.Snapshot,
-		OrderingColumn: s.config.OrderingColumn,
-		SDKPosition:    sdkPosition,
+		Collection:    collection,
+		BatchSize:     s.config.BatchSize,
+		Snapshot:      s.config.Snapshot,
+		OrderingField: s.config.OrderingField,
+		SDKPosition:   sdkPosition,
 	})
 	if err != nil {
-		return fmt.Errorf("create cdc iterator: %w", err)
+		return fmt.Errorf("create combined iterator: %w", err)
 	}
 
 	return nil

@@ -16,6 +16,7 @@ package iterator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -31,21 +32,48 @@ const idFieldName = "_id"
 
 // snapshot is a snapshot iterator for the MongoDB source connector.
 type snapshot struct {
-	collection     *mongo.Collection
-	orderingColumn string
-	batchSize      int
-	cursor         *mongo.Cursor
-	position       *position
+	collection    *mongo.Collection
+	orderingField string
+	batchSize     int
+	cursor        *mongo.Cursor
+	position      *position
+	// orderingFieldMaxValue is a max value of an ordering field
+	// at the start of the snapshot. The snapshot iterator will only
+	// grab fields with ordering field value less than or equal to this value.
+	orderingFieldMaxValue any
+}
+
+// snapshotParams is an incoming params for the [newSnapshot] function.
+type snapshotParams struct {
+	collection    *mongo.Collection
+	orderingField string
+	batchSize     int
+	position      *position
 }
 
 // newSnapshot creates a new instance of the [snapshot] iterator.
-func newSnapshot(collection *mongo.Collection, orderingColumn string, batchSize int, position *position) *snapshot {
-	return &snapshot{
-		collection:     collection,
-		orderingColumn: orderingColumn,
-		batchSize:      batchSize,
-		position:       position,
+func newSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) {
+	var orderingFieldMaxValue any
+
+	switch pos := params.position; {
+	case pos != nil && params.position.MaxElement != nil:
+		orderingFieldMaxValue = params.position.MaxElement
+
+	default:
+		var err error
+		orderingFieldMaxValue, err = getMaxFieldValue(ctx, params.collection, params.orderingField)
+		if err != nil && !errors.Is(err, errNoDocuments) {
+			return nil, fmt.Errorf("get ordering field max value: %w", err)
+		}
 	}
+
+	return &snapshot{
+		collection:            params.collection,
+		orderingField:         params.orderingField,
+		batchSize:             params.batchSize,
+		position:              params.position,
+		orderingFieldMaxValue: orderingFieldMaxValue,
+	}, nil
 }
 
 // hasNext checks whether the snapshot iterator has records to return or not.
@@ -70,8 +98,9 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 
 	// try to create and marshal the record position
 	position := &position{
-		Mode:    modeSnapshot,
-		Element: element[s.orderingColumn],
+		Mode:       modeSnapshot,
+		Element:    element[s.orderingField],
+		MaxElement: s.orderingFieldMaxValue,
 	}
 
 	sdkPosition, err := position.marshalSDKPosition()
@@ -104,25 +133,26 @@ func (s *snapshot) stop(ctx context.Context) error {
 }
 
 // loadBatch finds a batch of elements in a MongoDB collection, based on the snapshot's
-// collection, orderingColumn, batchSize, and the current position.
+// collection, orderingField, batchSize, and the current position.
 func (s *snapshot) loadBatch(ctx context.Context) error {
 	opts := options.Find().
-		SetSort(bson.M{s.orderingColumn: 1}).
+		SetSort(bson.M{s.orderingField: 1}).
 		SetLimit(int64(s.batchSize))
 
-	filter := bson.M{}
+	orderingFieldFilter := bson.M{}
+	// if the snapshot ordering field max value is not nil,
+	// we'll ask for elements that are less or equal to that value
+	if s.orderingFieldMaxValue != nil {
+		orderingFieldFilter["$lte"] = s.processFilterElement(s.orderingFieldMaxValue)
+	}
 	// if the snapshot position is not nil and its element is not empty,
 	// we'll do cursor-based pagination and ask for elements that are greater
 	// than the element
 	if s.position != nil && s.position.Element != nil {
-		positionElement := s.processPositionElement(s.position.Element)
-
-		filter[s.orderingColumn] = bson.M{
-			"$gt": positionElement,
-		}
+		orderingFieldFilter["$gt"] = s.processFilterElement(s.position.Element)
 	}
 
-	cursor, err := s.collection.Find(ctx, filter, opts)
+	cursor, err := s.collection.Find(ctx, bson.M{s.orderingField: orderingFieldFilter}, opts)
 	if err != nil {
 		return fmt.Errorf("execute find: %w", err)
 	}
@@ -132,18 +162,55 @@ func (s *snapshot) loadBatch(ctx context.Context) error {
 	return nil
 }
 
-// processPositionElement tries to parse the positionElement as a [primitive.ObjectID].
-//   - If the positionElement is a valid hex representation of the MongoDB ObjectID
+// processFilterElement tries to parse a filter as a [primitive.ObjectID].
+//   - If the filterElement is a valid hex representation of the MongoDB ObjectID
 //     the method returns it as a [primitive.ObjectID].
-//   - If the positionElement is not a valid hex representation of the MongoDB ObjectID
+//   - If the filterElement is not a valid hex representation of the MongoDB ObjectID
 //     the method returns the provided value without any modifications.
-func (s *snapshot) processPositionElement(positionElement any) any {
-	if positionElementStr, ok := positionElement.(string); ok {
-		positionElementObjectID, err := primitive.ObjectIDFromHex(positionElementStr)
+func (s *snapshot) processFilterElement(filterElement any) any {
+	if filterElementStr, ok := filterElement.(string); ok {
+		filterElementObjectID, err := primitive.ObjectIDFromHex(filterElementStr)
 		if err == nil {
-			return positionElementObjectID
+			return filterElementObjectID
 		}
 	}
 
-	return positionElement
+	return filterElement
+}
+
+// getMaxFieldValue returns the maximum field value that can be found in a MongoDB collection.
+func getMaxFieldValue(ctx context.Context, collection *mongo.Collection, fieldName string) (any, error) {
+	documentCount, err := collection.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return nil, fmt.Errorf("count collection documents: %w", err)
+	}
+
+	// if a collection doesn't have any documents,
+	// we'll return the errNoDocuments error and just skip the snapshot step.
+	if documentCount == 0 {
+		return nil, errNoDocuments
+	}
+
+	// this is the way we can get the maximum value of a specific field
+	opts := options.Find().SetSort(bson.M{fieldName: -1}).SetLimit(1)
+
+	cursor, err := collection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		return nil, fmt.Errorf("execute find: %w", err)
+	}
+
+	if !cursor.TryNext(ctx) {
+		if cursor.Err() != nil {
+			return nil, fmt.Errorf("cursor: %w", cursor.Err())
+		}
+
+		return nil, errMaxFieldValueNotFound
+	}
+
+	var element map[string]any
+	if err := cursor.Decode(&element); err != nil {
+		return nil, fmt.Errorf("decode cursor element: %w", err)
+	}
+
+	return element[fieldName], nil
 }
