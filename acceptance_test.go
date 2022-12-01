@@ -40,7 +40,7 @@ type driver struct {
 	sdk.ConfigurableAcceptanceTestDriver
 }
 
-// GenerateRecord overides the [sdk.ConfigurableAcceptanceTestDriver] GenerateRecord method.
+// GenerateRecord overrides the [sdk.ConfigurableAcceptanceTestDriver] GenerateRecord method.
 // It generates a MongoDB-specific payload and a random bson.ObjectID key converted to a string.
 func (d driver) GenerateRecord(t *testing.T, operation sdk.Operation) sdk.Record {
 	t.Helper()
