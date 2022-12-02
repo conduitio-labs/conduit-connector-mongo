@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // defaultConnectionURI is a default MongoDB connection URI string.
@@ -50,6 +51,18 @@ const (
 	//
 	//nolint:gosec // it's not hardcoded credentials
 	KeyAuthAWSSessionToken = "auth.awsSessionToken"
+)
+
+const (
+	// awsSessionTokenPropertyName is a name of a AWS session token property
+	// for the auth mechanism properties.
+	//
+	//nolint:gosec // it's not hardcoded credentials
+	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN"
+	// tlsCAFile is a URL query name for a TLS CA file.
+	tlsCAFileQueryName = "tlsCAFile"
+	// tlsCertificateKeyFileQueryName is a URL query name for a TLS certificate key file.
+	tlsCertificateKeyFileQueryName = "tlsCertificateKeyFile"
 )
 
 // AuthMechanism defines a MongoDB authentication mechanism.
@@ -149,4 +162,55 @@ func Parse(raw map[string]string) (Config, error) {
 	}
 
 	return config, nil
+}
+
+// GetClientOptions returns generated options for mongo connection depending on mechanism.
+func (d *Config) GetClientOptions() *options.ClientOptions {
+	uri, properties := d.getURIAndPropertiesByMechanism()
+	opts := options.Client().ApplyURI(uri)
+
+	// If we don't have any custom auth options, we should skip adding credential options
+	if d.Auth == (AuthConfig{}) {
+		return opts
+	}
+
+	cred := options.Credential{
+		AuthMechanism:           string(d.Auth.Mechanism),
+		AuthMechanismProperties: properties,
+		AuthSource:              d.Auth.DB,
+		Username:                d.Auth.Username,
+		Password:                d.Auth.Password,
+	}
+
+	return opts.SetAuth(cred)
+}
+
+// getURIAndPropertiesByMechanism generates uri and options depending on auth mechanism.
+func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
+	//nolint:exhaustive // because most of the mechanisms using same options
+	switch d.Auth.Mechanism {
+	case MongoDBX509:
+		uri := *d.URI
+
+		values := uri.Query()
+		values.Add(tlsCAFileQueryName, d.Auth.TLSCAFile)
+		values.Add(tlsCertificateKeyFileQueryName, d.Auth.TLSCertificateKeyFile)
+
+		uri.RawQuery = values.Encode()
+
+		return uri.String(), nil
+
+	case MongoDBAWS:
+		var properties map[string]string
+		if d.Auth.AWSSessionToken != "" {
+			properties = map[string]string{
+				awsSessionTokenPropertyName: d.Auth.AWSSessionToken,
+			}
+		}
+
+		return d.URI.String(), properties
+
+	default:
+		return d.URI.String(), nil
+	}
 }
