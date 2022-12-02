@@ -22,7 +22,6 @@ import (
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -143,13 +142,13 @@ func (s *snapshot) loadBatch(ctx context.Context) error {
 	// if the snapshot ordering field max value is not nil,
 	// we'll ask for elements that are less or equal to that value
 	if s.orderingFieldMaxValue != nil {
-		orderingFieldFilter["$lte"] = s.processFilterElement(s.orderingFieldMaxValue)
+		orderingFieldFilter["$lte"] = s.orderingFieldMaxValue
 	}
 	// if the snapshot position is not nil and its element is not empty,
 	// we'll do cursor-based pagination and ask for elements that are greater
 	// than the element
 	if s.position != nil && s.position.Element != nil {
-		orderingFieldFilter["$gt"] = s.processFilterElement(s.position.Element)
+		orderingFieldFilter["$gt"] = s.position.Element
 	}
 
 	cursor, err := s.collection.Find(ctx, bson.M{s.orderingField: orderingFieldFilter}, opts)
@@ -160,22 +159,6 @@ func (s *snapshot) loadBatch(ctx context.Context) error {
 	s.cursor = cursor
 
 	return nil
-}
-
-// processFilterElement tries to parse a filter as a [primitive.ObjectID].
-//   - If the filterElement is a valid hex representation of the MongoDB ObjectID
-//     the method returns it as a [primitive.ObjectID].
-//   - If the filterElement is not a valid hex representation of the MongoDB ObjectID
-//     the method returns the provided value without any modifications.
-func (s *snapshot) processFilterElement(filterElement any) any {
-	if filterElementStr, ok := filterElement.(string); ok {
-		filterElementObjectID, err := primitive.ObjectIDFromHex(filterElementStr)
-		if err == nil {
-			return filterElementObjectID
-		}
-	}
-
-	return filterElement
 }
 
 // getMaxFieldValue returns the maximum field value that can be found in a MongoDB collection.

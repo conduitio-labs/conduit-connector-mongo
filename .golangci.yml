@@ -125,3 +125,6 @@ issues:
     - path: acceptance_test
       linters:
         - paralleltest
+    - path: codec 
+      linters:
+        - wrapcheck # the codec package contains mongo driver specific code and we don't need to wrap errors from there

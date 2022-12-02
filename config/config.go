@@ -21,9 +21,8 @@ import (
 	"net/url"
 	"strings"
 
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // defaultConnectionURI is a default MongoDB connection URI string.

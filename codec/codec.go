@@ -22,12 +22,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// StringObjectIDCodec is an empty struct that is used for implementing bsoncodec.ValueEncoder interface.
+// StringObjectIDCodec is the Codec used for string values.
+// It tries to convert strings into [bson.ObjectID].
 type StringObjectIDCodec struct{}
 
-// EncodeValue is the ValueEncoder for string types that tries to convert them into ObjectID.
+// EncodeValue implements the [bsoncodec.ValueEncoder] interface.
+// The method tries to convert a string value into [bson.ObjectID].
 //
-//nolint:wrapcheck // these errors are used by mongo driver and should not be wrapped
+//   - If a string can be converted into [bson.ObjectID] it returns it as a [bson.ObjectID].
+//   - If a string cannot be converted into [bson.ObjectID] it returns it as a string, without any transformations.
 func (sc StringObjectIDCodec) EncodeValue(
 	ectx bsoncodec.EncodeContext,
 	vw bsonrw.ValueWriter,
