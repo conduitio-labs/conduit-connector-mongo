@@ -20,13 +20,13 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // bsoncodec.RegistryBuilder allows us to specify the logic of
@@ -34,9 +34,10 @@ import (
 // inside the MongoDB Go driver.
 //
 // In this particular case we convert bson.ObjectID to string
-// when unmarshaling a raw BSON element to map[string]any.
+// when unmarshaling a raw BSON element to map[string]any, and vice versa.
 var registry = bson.NewRegistryBuilder().
 	RegisterTypeMapEntry(bsontype.ObjectID, reflect.TypeOf(string(""))).
+	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
 	Build()
 
 // Iterator defines an Iterator interface needed for the [Source].
@@ -147,7 +148,7 @@ func (s *Source) Configure(ctx context.Context, raw map[string]string) error {
 
 // Open opens needed connections and prepares to start producing records.
 func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
-	opts := options.Client().ApplyURI(s.config.URI.String()).SetRegistry(registry)
+	opts := s.config.GetClientOptions().SetRegistry(registry)
 
 	var err error
 	s.client, err = mongo.Connect(ctx, opts)
