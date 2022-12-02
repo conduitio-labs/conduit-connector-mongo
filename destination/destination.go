@@ -56,8 +56,8 @@ func NewDestination() sdk.Destination {
 func (d *Destination) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
-			Default:  "",
-			Required: true,
+			Default:  "mongodb://localhost:27017",
+			Required: false,
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
