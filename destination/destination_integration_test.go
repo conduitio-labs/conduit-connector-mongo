@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianvoe/gofakeit"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,16 +39,10 @@ const (
 	testDB               = "test"
 	testCollectionPrefix = "test_coll"
 
-	// next consts will be used for test models.
-	testIDFieldName = "_id"
-	testID          = "6384c3e48740eb54f858bde5"
-
-	testTextFieldName = "textfield"
-	testTextData      = "some text data"
-
-	testNumberFieldName  = "numberfield"
-	testNumberData       = 1234
-	testNumberDataChange = 5678
+	// next consts will be used for test models as field names.
+	testIDFieldName    = "_id"
+	testEmailFieldName = "email"
+	testNameFieldName  = "name"
 )
 
 func TestDestination_Write_snapshotSuccess(t *testing.T) {
@@ -77,35 +72,13 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestSnapshot(t)})
+	testItem := getTestItem(t)
+
+	n, err := destination.Write(ctx, []sdk.Record{createTestSnapshotRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	c, err := col.CountDocuments(ctx, bson.D{})
-	is.NoErr(err)
-	is.Equal(c, int64(1))
-
-	res, err := col.Find(ctx, bson.M{})
-	res.Next(ctx)
-	var result map[string]any
-	err = res.Decode(&result)
-	is.NoErr(err)
-
-	id, ok := result[testIDFieldName].(primitive.ObjectID)
-	is.Equal(ok, true)
-
-	hex, err := primitive.ObjectIDFromHex(testID)
-	is.NoErr(err)
-
-	is.Equal(id, hex)
-
-	text, ok := result[testTextFieldName].(string)
-	is.Equal(ok, true)
-	is.Equal(text, testTextData)
-
-	num, ok := result[testNumberFieldName].(float64)
-	is.Equal(ok, true)
-	is.Equal(int(num), testNumberData)
+	compareTestPayload(t, ctx, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -138,35 +111,13 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t)})
+	testItem := getTestItem(t)
+
+	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	c, err := col.CountDocuments(ctx, bson.D{})
-	is.NoErr(err)
-	is.Equal(c, int64(1))
-
-	res, err := col.Find(ctx, bson.M{})
-	res.Next(ctx)
-	var result map[string]any
-	err = res.Decode(&result)
-	is.NoErr(err)
-
-	id, ok := result[testIDFieldName].(primitive.ObjectID)
-	is.Equal(ok, true)
-
-	hex, err := primitive.ObjectIDFromHex(testID)
-	is.NoErr(err)
-
-	is.Equal(id, hex)
-
-	text, ok := result[testTextFieldName].(string)
-	is.Equal(ok, true)
-	is.Equal(text, testTextData)
-
-	num, ok := result[testNumberFieldName].(float64)
-	is.Equal(ok, true)
-	is.Equal(int(num), testNumberData)
+	compareTestPayload(t, ctx, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -199,35 +150,17 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t)})
+	testItem := getTestItem(t)
+
+	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []sdk.Record{getTestUpdateRecord(t)})
+	n, err = destination.Write(ctx, []sdk.Record{createTestUpdateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	res, err := col.Find(ctx, bson.M{})
-	res.Next(ctx)
-	var result map[string]any
-	err = res.Decode(&result)
-	is.NoErr(err)
-
-	id, ok := result[testIDFieldName].(primitive.ObjectID)
-	is.Equal(ok, true)
-
-	hex, err := primitive.ObjectIDFromHex(testID)
-	is.NoErr(err)
-
-	is.Equal(id, hex)
-
-	text, ok := result[testTextFieldName].(string)
-	is.Equal(ok, true)
-	is.Equal(text, testTextData)
-
-	num, ok := result[testNumberFieldName].(float64)
-	is.Equal(ok, true)
-	is.Equal(int(num), testNumberDataChange)
+	compareTestPayload(t, ctx, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -260,11 +193,13 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t)})
+	testItem := getTestItem(t)
+
+	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	_, err = destination.Write(ctx, []sdk.Record{getTestUpdateRecordNoKeys(t)})
+	_, err = destination.Write(ctx, []sdk.Record{createTestUpdateRecordNoKeys(t)})
 	is.True(errors.Is(err, writer.ErrEmptyKey))
 
 	_, err = col.DeleteMany(ctx, bson.M{})
@@ -298,11 +233,13 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t)})
+	testItem := getTestItem(t)
+
+	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []sdk.Record{getTestDeleteRecord(t)})
+	n, err = destination.Write(ctx, []sdk.Record{createTestDeleteRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -314,6 +251,29 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is.NoErr(err)
 }
 
+func compareTestPayload(
+	t *testing.T,
+	ctx context.Context,
+	is *is.I,
+	col *mongo.Collection,
+	testRecordPayload sdk.StructuredData,
+) {
+	t.Helper()
+
+	c, err := col.CountDocuments(ctx, bson.D{})
+	is.NoErr(err)
+	is.Equal(c, int64(1))
+
+	res, err := col.Find(ctx, bson.M{})
+	is.NoErr(err)
+	is.True(res.TryNext(ctx))
+	var result map[string]any
+	err = res.Decode(&result)
+	is.NoErr(err)
+
+	is.Equal(sdk.StructuredData(result), testRecordPayload)
+}
+
 func getTestCollection(ctx context.Context, collection string) (*mongo.Collection, error) {
 	conn, err := mongo.Connect(ctx, options.Client().ApplyURI(testURI))
 	if err != nil {
@@ -323,64 +283,68 @@ func getTestCollection(ctx context.Context, collection string) (*mongo.Collectio
 	return conn.Database(testDB).Collection(collection), nil
 }
 
-func getTestCreateRecord(t *testing.T) sdk.Record {
+func getTestItem(t *testing.T) map[string]any {
+	t.Helper()
+	return map[string]any{
+		// testIDFieldName is declared as string for testing codec
+		testIDFieldName:    primitive.NewObjectIDFromTimestamp(time.Now()).String(),
+		testEmailFieldName: gofakeit.Email(),
+		testNameFieldName:  gofakeit.Name(),
+	}
+}
+
+func getTestCreateRecord(t *testing.T, item map[string]any) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordCreate(
 		nil, nil,
 		// in insert keys are not used, so we can omit it
 		nil,
-		sdk.StructuredData{
-			testIDFieldName:     testID, // we put it as string here, codec will translate it into ObjectID
-			testTextFieldName:   testTextData,
-			testNumberFieldName: testNumberData,
-		},
+		sdk.StructuredData(item),
 	)
 }
 
-func getTestSnapshot(t *testing.T) sdk.Record {
+func createTestSnapshotRecord(t *testing.T, item map[string]any) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordSnapshot(
 		nil, nil,
 		// in insert keys are not used, so we can omit it
 		nil,
-		sdk.StructuredData{
-			testIDFieldName:     testID, // we put it as string here, codec will translate it into ObjectID
-			testTextFieldName:   testTextData,
-			testNumberFieldName: testNumberData,
-		},
+		sdk.StructuredData(item),
 	)
 }
 
-func getTestUpdateRecord(t *testing.T) sdk.Record {
+func createTestUpdateRecord(t *testing.T, item map[string]any) sdk.Record {
 	t.Helper()
 
+	newName := gofakeit.LastName()
+	item[testNameFieldName] = newName
 	return sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
-		sdk.StructuredData{testIDFieldName: testID},
+		sdk.StructuredData{testIDFieldName: item[testIDFieldName]},
 		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNumberFieldName: testNumberDataChange},
+		sdk.StructuredData{testNameFieldName: newName},
 	)
 }
 
-func getTestUpdateRecordNoKeys(t *testing.T) sdk.Record {
+func createTestUpdateRecordNoKeys(t *testing.T) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
 		sdk.StructuredData{},
 		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNumberFieldName: testNumberDataChange},
+		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
 	)
 }
 
-func getTestDeleteRecord(t *testing.T) sdk.Record {
+func createTestDeleteRecord(t *testing.T, item map[string]any) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordDelete(
 		nil, nil,
-		sdk.StructuredData{testIDFieldName: testID},
+		sdk.StructuredData{testIDFieldName: item[testIDFieldName]},
 	)
 }
 
