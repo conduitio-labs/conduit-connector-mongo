@@ -78,7 +78,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	compareTestPayload(t, ctx, is, col, testItem)
+	compareTestPayload(ctx, t, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -117,7 +117,7 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	compareTestPayload(t, ctx, is, col, testItem)
+	compareTestPayload(ctx, t, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -160,7 +160,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	compareTestPayload(t, ctx, is, col, testItem)
+	compareTestPayload(ctx, t, is, col, testItem)
 
 	_, err = col.DeleteMany(ctx, bson.M{})
 	is.NoErr(err)
@@ -252,8 +252,8 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 }
 
 func compareTestPayload(
-	t *testing.T,
 	ctx context.Context,
+	t *testing.T,
 	is *is.I,
 	col *mongo.Collection,
 	testRecordPayload sdk.StructuredData,
@@ -285,6 +285,7 @@ func getTestCollection(ctx context.Context, collection string) (*mongo.Collectio
 
 func getTestItem(t *testing.T) map[string]any {
 	t.Helper()
+
 	return map[string]any{
 		// testIDFieldName is declared as string for testing codec
 		testIDFieldName:    primitive.NewObjectIDFromTimestamp(time.Now()).String(),
@@ -320,6 +321,7 @@ func createTestUpdateRecord(t *testing.T, item map[string]any) sdk.Record {
 
 	newName := gofakeit.LastName()
 	item[testNameFieldName] = newName
+
 	return sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
 		sdk.StructuredData{testIDFieldName: item[testIDFieldName]},
