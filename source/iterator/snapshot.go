@@ -131,7 +131,7 @@ func (s *snapshot) stop(ctx context.Context) error {
 	return nil
 }
 
-// loadBatch finds a batch of elements in a MongoDB collection, based on the snapshot's
+// loadBatch finds a batch of documents in a MongoDB collection, based on the snapshot's
 // collection, orderingField, batchSize, and the current position.
 func (s *snapshot) loadBatch(ctx context.Context) error {
 	opts := options.Find().
@@ -140,12 +140,12 @@ func (s *snapshot) loadBatch(ctx context.Context) error {
 
 	orderingFieldFilter := bson.M{}
 	// if the snapshot ordering field max value is not nil,
-	// we'll ask for elements that are less or equal to that value
+	// we'll ask for documents that are less or equal to that value
 	if s.orderingFieldMaxValue != nil {
 		orderingFieldFilter["$lte"] = s.orderingFieldMaxValue
 	}
 	// if the snapshot position is not nil and its element is not empty,
-	// we'll do cursor-based pagination and ask for elements that are greater
+	// we'll do cursor-based pagination and ask for documents that are greater
 	// than the element
 	if s.position != nil && s.position.Element != nil {
 		orderingFieldFilter["$gt"] = s.position.Element
