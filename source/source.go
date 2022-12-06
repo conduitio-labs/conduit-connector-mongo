@@ -100,7 +100,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 		config.KeyAuthMechanism: {
 			Default:     "The default mechanism that defined depending on your MongoDB server version.",
 			Required:    false,
-			Description: "The authentication mechanism. ",
+			Description: "The authentication mechanism.",
 		},
 		config.KeyAuthTLSCAFile: {
 			Default:  "",
@@ -128,7 +128,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Default:  "_id",
 			Required: false,
 			Description: "The name of a field that is used for ordering " +
-				"collection elements when capturing a snapshot.",
+				"collection documents when capturing a snapshot.",
 		},
 	}
 }
