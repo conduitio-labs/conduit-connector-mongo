@@ -87,4 +87,4 @@ If a record contains a `mongo.collection` property in its metadata it will be wr
 
 The connector uses all keys from an `sdk.Record` when updating and deleting documents.
 
-If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is. 
+If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is.
