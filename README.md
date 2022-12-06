@@ -60,3 +60,31 @@ The connector stores a `resumeToken` of every Change Stream event in a position,
 The connector always uses the `_id` field as a key.
 
 If the `_id` field is `bson.ObjectID` the connector converts it to a string when transferring a record to a destination, otherwise, it leaves it unchanged.
+
+## Destination
+
+The MongoDB Destination takes a `sdk.Record` and parses it into a valid MongoDB query. The Destination is designed to handle different payloads and keys. Because of this, each record is individually parsed and written.
+
+### Collection name
+
+If a record contains a `mongo.collection` property in its metadata it will be written in that collection, otherwise it will fall back to use the `collection` configured in the connector. Thus, a Destination can support multiple collections in the same connector, as long as the user has proper access to those collections.
+
+### Configuration
+
+| name                          | description                                                                                                                         | required | default                                                                                                                                                    |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `uri`                         | The connection string. The URI can contain host names, IPv4/IPv6 literals, or an SRV record.                                        | false    | `mongodb://localhost:27017`                                                                                                                                |
+| `db`                          | The name of a database the connector must work with.                                                                                | **true** |                                                                                                                                                            |
+| `collection`                  | The name of a collection the connector must write to.                                                                               | **true** |                                                                                                                                                            |
+| `auth.username`               | The username.                                                                                                                       | false    |                                                                                                                                                            |
+| `auth.password`               | The user's password.                                                                                                                | false    |                                                                                                                                                            |
+| `auth.db`                     | The name of a database that contains the user's authentication data.                                                                | false    | `admin`                                                                                                                                                    |
+| `auth.mechanism`              | The authentication mechanism. The available values are `SCRAM-SHA-256`, `SCRAM-SHA-1`, `MONGODB-CR`, `MONGODB-AWS`, `MONGODB-X509`. | false    | The default mechanism that [defined depending on your MongoDB server version](https://www.mongodb.com/docs/drivers/go/current/fundamentals/auth/#default). |
+| `auth.tls.caFile`             | The path to either a single or a bundle of certificate authorities to trust when making a TLS connection.                           | false    |                                                                                                                                                            |
+| `auth.tls.certificateKeyFile` | The path to the client certificate file or the client private key file.                                                             | false    |                                                                                                                                                            |
+
+### Key handling
+
+The connector uses all keys from an `sdk.Record` when updating and deleting documents.
+
+If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is. 
