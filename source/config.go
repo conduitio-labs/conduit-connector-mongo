@@ -50,7 +50,7 @@ type Config struct {
 	// of the entire collection before starting CDC mode.
 	Snapshot bool `key:"snapshot"`
 	// OrderingField is the name of a field that is used for ordering
-	// collection elements when capturing a snapshot.
+	// collection documents when capturing a snapshot.
 	OrderingField string `key:"orderingField"`
 }
 
