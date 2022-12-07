@@ -74,7 +74,12 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{createTestSnapshotRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordSnapshot(
+		nil, nil,
+		// in insert keys are not used, so we can omit it
+		nil,
+		sdk.StructuredData(testItem),
+	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -156,7 +161,12 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []sdk.Record{createTestUpdateRecord(t, testItem)})
+	n, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordUpdate(
+		nil, nil,
+		sdk.StructuredData{testIDFieldName: testItem[testIDFieldName]},
+		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
+		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
+	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -199,7 +209,12 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	_, err = destination.Write(ctx, []sdk.Record{createTestUpdateRecordNoKeys(t)})
+	_, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordUpdate(
+		nil, nil,
+		sdk.StructuredData{},
+		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
+		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
+	)})
 	is.True(errors.Is(err, writer.ErrEmptyKey))
 
 	_, err = col.DeleteMany(ctx, bson.M{})
@@ -239,7 +254,10 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []sdk.Record{createTestDeleteRecord(t, testItem)})
+	n, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordDelete(
+		nil, nil,
+		sdk.StructuredData{testIDFieldName: testItem[testIDFieldName]},
+	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -302,51 +320,6 @@ func createTestCreateRecord(t *testing.T, item map[string]any) sdk.Record {
 		// in insert keys are not used, so we can omit it
 		nil,
 		sdk.StructuredData(item),
-	)
-}
-
-func createTestSnapshotRecord(t *testing.T, item map[string]any) sdk.Record {
-	t.Helper()
-
-	return sdk.Util.Source.NewRecordSnapshot(
-		nil, nil,
-		// in insert keys are not used, so we can omit it
-		nil,
-		sdk.StructuredData(item),
-	)
-}
-
-func createTestUpdateRecord(t *testing.T, item map[string]any) sdk.Record {
-	t.Helper()
-
-	newName := gofakeit.LastName()
-	item[testNameFieldName] = newName
-
-	return sdk.Util.Source.NewRecordUpdate(
-		nil, nil,
-		sdk.StructuredData{testIDFieldName: item[testIDFieldName]},
-		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNameFieldName: newName},
-	)
-}
-
-func createTestUpdateRecordNoKeys(t *testing.T) sdk.Record {
-	t.Helper()
-
-	return sdk.Util.Source.NewRecordUpdate(
-		nil, nil,
-		sdk.StructuredData{},
-		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
-	)
-}
-
-func createTestDeleteRecord(t *testing.T, item map[string]any) sdk.Record {
-	t.Helper()
-
-	return sdk.Util.Source.NewRecordDelete(
-		nil, nil,
-		sdk.StructuredData{testIDFieldName: item[testIDFieldName]},
 	)
 }
 
