@@ -72,7 +72,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	testItem := getTestItem(t)
+	testItem := createTestItem(t)
 
 	n, err := destination.Write(ctx, []sdk.Record{createTestSnapshotRecord(t, testItem)})
 	is.NoErr(err)
@@ -111,9 +111,9 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	testItem := getTestItem(t)
+	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -150,9 +150,9 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	testItem := getTestItem(t)
+	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -193,9 +193,9 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	testItem := getTestItem(t)
+	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -233,9 +233,9 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	testItem := getTestItem(t)
+	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{getTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -283,7 +283,7 @@ func getTestCollection(ctx context.Context, collection string) (*mongo.Collectio
 	return conn.Database(testDB).Collection(collection), nil
 }
 
-func getTestItem(t *testing.T) map[string]any {
+func createTestItem(t *testing.T) map[string]any {
 	t.Helper()
 
 	return map[string]any{
@@ -294,7 +294,7 @@ func getTestItem(t *testing.T) map[string]any {
 	}
 }
 
-func getTestCreateRecord(t *testing.T, item map[string]any) sdk.Record {
+func createTestCreateRecord(t *testing.T, item map[string]any) sdk.Record {
 	t.Helper()
 
 	return sdk.Util.Source.NewRecordCreate(
