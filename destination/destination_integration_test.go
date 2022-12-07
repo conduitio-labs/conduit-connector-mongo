@@ -161,11 +161,12 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
+	testItem[testNameFieldName] = gofakeit.LastName()
 	n, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
 		sdk.StructuredData{testIDFieldName: testItem[testIDFieldName]},
 		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
+		sdk.StructuredData{testNameFieldName: testItem[testNameFieldName]},
 	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
