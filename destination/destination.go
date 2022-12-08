@@ -24,6 +24,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
@@ -119,19 +120,22 @@ func (d *Destination) Configure(ctx context.Context, cfg map[string]string) erro
 
 // Open makes sure everything is prepared to receive records.
 func (d *Destination) Open(ctx context.Context) error {
-	client, err := mongo.Connect(ctx, d.config.GetClientOptions().
-		SetRegistry(registry))
+	var err error
+	d.client, err = mongo.Connect(ctx, d.config.GetClientOptions().SetRegistry(registry))
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}
 
-	err = client.Ping(ctx, nil)
-	if err != nil {
+	if err = d.client.Ping(ctx, nil); err != nil {
 		return fmt.Errorf("ping to mongo: %w", err)
 	}
 
-	d.client = client
-	d.writer = writer.NewWriter(client.Database(d.config.DB).Collection(d.config.Collection))
+	collection, err := common.GetMongoCollection(ctx, d.client, d.config.DB, d.config.Collection)
+	if err != nil {
+		return fmt.Errorf("get mongo collection: %w", err)
+	}
+
+	d.writer = writer.NewWriter(collection)
 
 	return nil
 }

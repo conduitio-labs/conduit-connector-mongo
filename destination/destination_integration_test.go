@@ -36,7 +36,7 @@ import (
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
 	testURI              = "mongodb://localhost:27017/?directConnection=true"
-	testDB               = "test"
+	testDB               = "test_destination"
 	testCollectionPrefix = "test_coll"
 
 	// next consts will be used for test models as field names.
@@ -58,9 +58,6 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	err = destination.Open(ctx)
-	is.NoErr(err)
-
 	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
 	is.NoErr(err)
 
@@ -71,6 +68,9 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
@@ -102,9 +102,6 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	err = destination.Open(ctx)
-	is.NoErr(err)
-
 	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
 	is.NoErr(err)
 
@@ -115,6 +112,9 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
@@ -146,9 +146,6 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	err = destination.Open(ctx)
-	is.NoErr(err)
-
 	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
 	is.NoErr(err)
 
@@ -159,6 +156,9 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
@@ -199,9 +199,6 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	err = destination.Open(ctx)
-	is.NoErr(err)
-
 	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
 	is.NoErr(err)
 
@@ -212,6 +209,9 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
@@ -248,9 +248,6 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	err = destination.Open(ctx)
-	is.NoErr(err)
-
 	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
 	is.NoErr(err)
 
@@ -261,6 +258,9 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 		err = destination.Teardown(ctx)
 		is.NoErr(err)
 	})
+
+	err = destination.Open(ctx)
+	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
@@ -316,7 +316,12 @@ func getTestCollection(ctx context.Context, collection string) (*mongo.Collectio
 		return nil, fmt.Errorf("connect to mongo: %w", err)
 	}
 
-	return conn.Database(testDB).Collection(collection), nil
+	database := conn.Database(testDB)
+	if err = database.CreateCollection(ctx, collection); err != nil {
+		return nil, fmt.Errorf("create collection: %w", err)
+	}
+
+	return database.Collection(collection), nil
 }
 
 func createTestItem(t *testing.T) map[string]any {

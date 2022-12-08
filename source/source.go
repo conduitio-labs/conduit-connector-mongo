@@ -21,6 +21,7 @@ import (
 	"reflect"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -160,7 +161,10 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 		return fmt.Errorf("ping mongo server: %w", err)
 	}
 
-	collection := s.client.Database(s.config.DB).Collection(s.config.Collection)
+	collection, err := common.GetMongoCollection(ctx, s.client, s.config.DB, s.config.Collection)
+	if err != nil {
+		return fmt.Errorf("get mongo collection: %w", err)
+	}
 
 	s.iterator, err = iterator.NewCombined(ctx, iterator.CombinedParams{
 		Collection:    collection,

@@ -34,9 +34,68 @@ import (
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
 	testURI              = "mongodb://localhost:27017/?directConnection=true"
-	testDB               = "test"
+	testDB               = "test_source"
 	testCollectionPrefix = "test_coll"
 )
+
+func TestSource_Open_failDatabaseNotExist(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
+	is.True(err != nil)
+	is.Equal(err.Error(), fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, sourceConfig[config.KeyDB]))
+}
+
+func TestSource_Open_failCollectionNotExist(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	is.NoErr(err)
+	t.Cleanup(func() {
+		err = mongoClient.Disconnect(context.Background())
+		is.NoErr(err)
+	})
+
+	// connect to a test database (this will create it automatically)
+	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	// create a test collection with a wrong name
+	wrongName := sourceConfig[config.KeyCollection] + "s"
+	is.NoErr(testDatabase.CreateCollection(ctx, wrongName))
+	testCollection := testDatabase.Collection(wrongName)
+	// drop the created test collection after the test
+	t.Cleanup(func() {
+		err = testCollection.Drop(context.Background())
+		is.NoErr(err)
+	})
+
+	err = source.Open(ctx, nil)
+	is.True(err != nil)
+	is.Equal(err.Error(), fmt.Sprintf(
+		`get mongo collection: collection "%s" doesn't exist`, sourceConfig[config.KeyCollection]),
+	)
+}
 
 func TestSource_Read_successSnapshot(t *testing.T) {
 	is := is.New(t)
@@ -61,6 +120,7 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 
 	// connect to the test database and create the test collection
 	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
 	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
 	// drop the created test collection after the test
 	t.Cleanup(func() {
@@ -104,6 +164,7 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 
 	// connect to the test database and create the test collection
 	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
 	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
 	// drop the created test collection after the test
 	t.Cleanup(func() {
@@ -161,13 +222,6 @@ func TestSource_Read_successCDC(t *testing.T) {
 	err := source.Configure(ctx, sourceConfig)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
-	is.NoErr(err)
-
-	// we expect backoff retry and switch to CDC mode here
-	_, err = source.Read(ctx)
-	is.Equal(err, sdk.ErrBackoffRetry)
-
 	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
 	is.NoErr(err)
 	t.Cleanup(func() {
@@ -177,12 +231,20 @@ func TestSource_Read_successCDC(t *testing.T) {
 
 	// connect to the test database and create the test collection
 	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
 	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
 		is.NoErr(err)
 	})
+
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
+	// we expect backoff retry and switch to CDC mode here
+	_, err = source.Read(ctx)
+	is.Equal(err, sdk.ErrBackoffRetry)
 
 	// insert a test item to the test collection
 	testItem, err := createTestItem(ctx, testCollection)
@@ -228,13 +290,6 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	err := source.Configure(ctx, sourceConfig)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
-	is.NoErr(err)
-
-	// we expect backoff retry and switch to CDC mode here
-	_, err = source.Read(ctx)
-	is.Equal(err, sdk.ErrBackoffRetry)
-
 	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
 	is.NoErr(err)
 	t.Cleanup(func() {
@@ -244,12 +299,20 @@ func TestSource_Read_continueCDC(t *testing.T) {
 
 	// connect to the test database and create the test collection
 	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
 	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
 		is.NoErr(err)
 	})
+
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
+	// we expect backoff retry and switch to CDC mode here
+	_, err = source.Read(ctx)
+	is.Equal(err, sdk.ErrBackoffRetry)
 
 	// insert a test item to the test collection
 	firstTestItem, err := createTestItem(ctx, testCollection)

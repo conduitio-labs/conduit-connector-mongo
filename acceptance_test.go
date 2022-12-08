@@ -32,7 +32,7 @@ import (
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
 	testURI              = "mongodb://localhost:27017/?directConnection=true"
-	testDB               = "test"
+	testDB               = "test_acceptance"
 	testCollectionPrefix = "test_acceptance_coll"
 )
 
@@ -87,7 +87,21 @@ func beforeTest(cfg map[string]string) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
 
+		is := is.New(t)
+
+		// create a test mongo client
+		mongoClient, err := createTestMongoClient(context.Background(), cfg[config.KeyURI])
+		is.NoErr(err)
+		defer func() {
+			err = mongoClient.Disconnect(context.Background())
+			is.NoErr(err)
+		}()
+
 		cfg[config.KeyCollection] = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
+
+		// connect to the test database and create a collection
+		testDatabase := mongoClient.Database(cfg[config.KeyDB])
+		is.NoErr(testDatabase.CreateCollection(context.Background(), cfg[config.KeyCollection]))
 	}
 }
 
