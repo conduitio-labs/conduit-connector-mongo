@@ -118,7 +118,12 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx,
+		[]sdk.Record{sdk.Util.Source.NewRecordCreate(
+			nil,
+			nil,
+			nil,
+			sdk.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -157,7 +162,11 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+		nil,
+		nil,
+		nil,
+		sdk.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -206,7 +215,11 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+		nil,
+		nil,
+		nil,
+		sdk.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -251,7 +264,11 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{createTestCreateRecord(t, testItem)})
+	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+		nil,
+		nil,
+		nil,
+		sdk.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -311,17 +328,6 @@ func createTestItem(t *testing.T) map[string]any {
 		testEmailFieldName: gofakeit.Email(),
 		testNameFieldName:  gofakeit.Name(),
 	}
-}
-
-func createTestCreateRecord(t *testing.T, item map[string]any) sdk.Record {
-	t.Helper()
-
-	return sdk.Util.Source.NewRecordCreate(
-		nil, nil,
-		// in insert keys are not used, so we can omit it
-		nil,
-		sdk.StructuredData(item),
-	)
 }
 
 func prepareConfig(t *testing.T) map[string]string {
