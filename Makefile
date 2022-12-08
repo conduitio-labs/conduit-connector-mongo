@@ -8,7 +8,7 @@ build:
 
 test:
 	docker run --rm -d -p 27017:27017 --name mongodb mongo --replSet=test
-	sleep $(MONGODB_STARTUP_TIMEOUT) 
+	sleep $(MONGODB_STARTUP_TIMEOUT)
 	docker exec mongodb mongosh --eval "rs.initiate();"
 	go test $(GOTEST_FLAGS) ./...; ret=$$?; \
 		docker stop mongodb; \
