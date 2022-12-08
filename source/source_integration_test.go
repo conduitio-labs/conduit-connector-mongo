@@ -38,6 +38,65 @@ const (
 	testCollectionPrefix = "test_coll"
 )
 
+func TestSource_Open_failDatabaseNotExist(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
+	is.True(err != nil)
+	is.Equal(err.Error(), fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, sourceConfig[config.KeyDB]))
+}
+
+func TestSource_Open_failCollectionNotExist(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	is.NoErr(err)
+	t.Cleanup(func() {
+		err = mongoClient.Disconnect(context.Background())
+		is.NoErr(err)
+	})
+
+	// connect to a test database (this will create it automatically)
+	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	// create a test collection with a wrong name
+	wrongName := sourceConfig[config.KeyCollection] + "s"
+	is.NoErr(testDatabase.CreateCollection(ctx, wrongName))
+	testCollection := testDatabase.Collection(wrongName)
+	// drop the created test collection after the test
+	t.Cleanup(func() {
+		err = testCollection.Drop(context.Background())
+		is.NoErr(err)
+	})
+
+	err = source.Open(ctx, nil)
+	is.True(err != nil)
+	is.Equal(err.Error(), fmt.Sprintf(
+		`get mongo collection: collection "%s" doesn't exist`, sourceConfig[config.KeyCollection]),
+	)
+}
+
 func TestSource_Read_successSnapshot(t *testing.T) {
 	is := is.New(t)
 

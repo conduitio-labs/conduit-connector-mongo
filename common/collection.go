@@ -50,7 +50,7 @@ func GetMongoCollection(ctx context.Context, client *mongo.Client, db, collectio
 
 	// if the list operation returns nothing - the collection doesn't exist
 	if len(collectionNames) == 0 {
-		return nil, fmt.Errorf("collection %q doesn't exist", db)
+		return nil, fmt.Errorf("collection %q doesn't exist", collection)
 	}
 
 	return client.Database(db).Collection(collection), nil
