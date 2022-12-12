@@ -40,6 +40,10 @@ type snapshot struct {
 	// at the start of the snapshot. The snapshot iterator will only
 	// grab fields with ordering field value less than or equal to this value.
 	orderingFieldMaxValue any
+	// resumeToken is needed for resuming the connector (particularly the CDC iterator)
+	// after a pause that occurs just after the snapshot is completed.
+	// That's why this value is stored in a snapshot position.
+	resumeToken bson.Raw
 }
 
 // snapshotParams is an incoming params for the [newSnapshot] function.
@@ -48,6 +52,7 @@ type snapshotParams struct {
 	orderingField string
 	batchSize     int
 	position      *position
+	resumeToken   bson.Raw
 }
 
 // newSnapshot creates a new instance of the [snapshot] iterator.
@@ -72,6 +77,7 @@ func newSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) 
 		batchSize:             params.batchSize,
 		position:              params.position,
 		orderingFieldMaxValue: orderingFieldMaxValue,
+		resumeToken:           params.resumeToken,
 	}, nil
 }
 
@@ -97,9 +103,10 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 
 	// try to create and marshal the record position
 	position := &position{
-		Mode:       modeSnapshot,
-		Element:    element[s.orderingField],
-		MaxElement: s.orderingFieldMaxValue,
+		Mode:        modeSnapshot,
+		Element:     element[s.orderingField],
+		MaxElement:  s.orderingFieldMaxValue,
+		ResumeToken: s.resumeToken,
 	}
 
 	sdkPosition, err := position.marshalSDKPosition()

@@ -54,23 +54,24 @@ func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) 
 		return nil, fmt.Errorf("parse sdk position: %w", err)
 	}
 
+	// create the CDC iterator in any case in order to properly
+	// switch after the snapshot and start consuming events starting from the current time
+	combined.cdc, err = newCDC(ctx, params.Collection, position)
+	if err != nil {
+		return nil, fmt.Errorf("init cdc iterator: %w", err)
+	}
+
 	if params.Snapshot && (position == nil || position.Mode == modeSnapshot) {
 		combined.snapshot, err = newSnapshot(ctx, snapshotParams{
 			collection:    params.Collection,
 			orderingField: params.OrderingField,
 			batchSize:     params.BatchSize,
 			position:      position,
+			resumeToken:   combined.cdc.changeStream.ResumeToken(),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("init snapshot iterator: %w", err)
 		}
-	}
-
-	// create the CDC iterator in any case in order to properly
-	// switch after the snapshot and start consuming events starting from the current time
-	combined.cdc, err = newCDC(ctx, params.Collection, position)
-	if err != nil {
-		return nil, fmt.Errorf("init cdc iterator: %w", err)
 	}
 
 	return combined, nil
