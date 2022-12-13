@@ -276,6 +276,83 @@ func TestSource_Read_successCDC(t *testing.T) {
 	is.Equal(record.Operation, sdk.OperationDelete)
 }
 
+func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
+	is := is.New(t)
+
+	// prepare a config, configure and open a new source
+	sourceConfig := prepareConfig(t)
+
+	source := NewSource()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := source.Configure(ctx, sourceConfig)
+	is.NoErr(err)
+
+	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	is.NoErr(err)
+	t.Cleanup(func() {
+		err = mongoClient.Disconnect(context.Background())
+		is.NoErr(err)
+	})
+
+	// connect to the test database and create the test collection
+	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
+	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	// drop the created test collection after the test
+	t.Cleanup(func() {
+		err = testCollection.Drop(context.Background())
+		is.NoErr(err)
+	})
+
+	// insert a test item to the test collection
+	snapshotItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	err = source.Open(ctx, nil)
+	is.NoErr(err)
+
+	// we expect a snapshot record
+	record, err := source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationSnapshot)
+	is.Equal(record.Payload.After, snapshotItem)
+
+	// stop the source
+	cancel()
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+
+	err = source.Teardown(ctx)
+	is.NoErr(err)
+
+	// insert a test item to the test collection while the source is stopped
+	cdcCreateItem, err := createTestItem(ctx, testCollection)
+	is.NoErr(err)
+
+	// update a test item to the test collection while the source is stopped
+	cdcUpdateItem, err := updateTestItem(ctx, testCollection, cdcCreateItem)
+	is.NoErr(err)
+
+	// resume the source
+	err = source.Open(ctx, record.Position)
+	is.NoErr(err)
+
+	// compare the record operation and its payload
+	record, err = source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationCreate)
+	is.Equal(record.Payload.After, cdcCreateItem)
+
+	// compare the record operation and its payload
+	record, err = source.Read(ctx)
+	is.NoErr(err)
+	is.Equal(record.Operation, sdk.OperationUpdate)
+	is.Equal(record.Payload.After, cdcUpdateItem)
+}
+
 func TestSource_Read_continueCDC(t *testing.T) {
 	is := is.New(t)
 
@@ -440,12 +517,19 @@ func updateTestItem(
 	newEmail := gofakeit.Email()
 	newFirstName := gofakeit.FirstName()
 
-	testItemID, ok := testItem["_id"].(string)
+	// copy the testItem into the new updatedTestItem,
+	// in order not to modify the original testItem
+	updatedTestItem := make(sdk.StructuredData)
+	for key, value := range testItem {
+		updatedTestItem[key] = value
+	}
+
+	updatedTestItemID, ok := updatedTestItem["_id"].(string)
 	if !ok {
 		return nil, errors.New("cannot convert _id to string")
 	}
 
-	parsedTestItemID, err := primitive.ObjectIDFromHex(testItemID)
+	parsedTestItemID, err := primitive.ObjectIDFromHex(updatedTestItemID)
 	if err != nil {
 		return nil, fmt.Errorf("object id from hex: %w", err)
 	}
@@ -458,12 +542,12 @@ func updateTestItem(
 		return nil, fmt.Errorf("update one: %w", err)
 	}
 
-	// set the updated fields to the testItem in order
+	// set the updated fields to the updatedTestItem in order
 	// to compare this with a resulting record payload
-	testItem["email"] = newEmail
-	testItem["firstName"] = newFirstName
+	updatedTestItem["email"] = newEmail
+	updatedTestItem["firstName"] = newFirstName
 
-	return testItem, nil
+	return updatedTestItem, nil
 }
 
 // deleteTestItem deletes a test item by a provided id.
