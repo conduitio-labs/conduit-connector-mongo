@@ -23,33 +23,40 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// nameFilterName is a filter name that is used for querying database and collection names.
-const nameFilterName = "name"
-
 // GetMongoCollection checks if the provided database and collection
 // exist in a Mongo instance the client is connected to, and returns the [mongo.Collection] if they exist.
 // By default, the Go Mongo driver creates a database and collection if they don't exist,
 // so this function may come in handy when it comes to validations.
 func GetMongoCollection(ctx context.Context, client *mongo.Client, db, collection string) (*mongo.Collection, error) {
-	// list database names filtering them by name, so we must get only one database name if it exists
-	databaseNames, err := client.ListDatabaseNames(ctx, bson.M{nameFilterName: db})
+	databaseNames, err := client.ListDatabaseNames(ctx, bson.M{})
 	if err != nil {
 		return nil, fmt.Errorf("list database names: %w", err)
 	}
 
-	// if the list operation returns nothing - the database doesn't exist
-	if len(databaseNames) == 0 {
+	databaseExist := false
+	for _, databaseName := range databaseNames {
+		if databaseName == db {
+			databaseExist = true
+		}
+	}
+
+	if !databaseExist {
 		return nil, fmt.Errorf("database %q doesn't exist", db)
 	}
 
-	// list collection names filtering them by name, so we must get only one collection name if it exists
-	collectionNames, err := client.Database(db).ListCollectionNames(ctx, bson.M{nameFilterName: collection})
+	collectionNames, err := client.Database(db).ListCollectionNames(ctx, bson.M{})
 	if err != nil {
 		return nil, fmt.Errorf("list collection names: %w", err)
 	}
 
-	// if the list operation returns nothing - the collection doesn't exist
-	if len(collectionNames) == 0 {
+	collectionExist := false
+	for _, collectionName := range collectionNames {
+		if collectionName == collection {
+			collectionExist = true
+		}
+	}
+
+	if !collectionExist {
 		return nil, fmt.Errorf("collection %q doesn't exist", collection)
 	}
 
