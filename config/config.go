@@ -20,13 +20,19 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/validator"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// defaultConnectionURI is a default MongoDB connection URI string.
-var defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
+var (
+	// defaultConnectionURI is a default MongoDB connection URI string.
+	defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
+
+	// defaultServerSelectionTimeout is a default value for the ServerSelectionTimeout option.
+	defaultServerSelectionTimeout = time.Second * 5
+)
 
 const (
 	// KeyURI is a config name for a connection string.
@@ -167,7 +173,7 @@ func Parse(raw map[string]string) (Config, error) {
 // GetClientOptions returns generated options for mongo connection depending on mechanism.
 func (d *Config) GetClientOptions() *options.ClientOptions {
 	uri, properties := d.getURIAndPropertiesByMechanism()
-	opts := options.Client().ApplyURI(uri)
+	opts := options.Client().ApplyURI(uri).SetServerSelectionTimeout(defaultServerSelectionTimeout)
 
 	// If we don't have any custom auth options, we should skip adding credential options
 	if d.Auth == (AuthConfig{}) {
@@ -193,8 +199,14 @@ func (d *Config) getURIAndPropertiesByMechanism() (string, map[string]string) {
 		uri := *d.URI
 
 		values := uri.Query()
-		values.Add(tlsCAFileQueryName, d.Auth.TLSCAFile)
-		values.Add(tlsCertificateKeyFileQueryName, d.Auth.TLSCertificateKeyFile)
+
+		if d.Auth.TLSCAFile != "" {
+			values.Add(tlsCAFileQueryName, d.Auth.TLSCAFile)
+		}
+
+		if d.Auth.TLSCertificateKeyFile != "" {
+			values.Add(tlsCertificateKeyFileQueryName, d.Auth.TLSCertificateKeyFile)
+		}
 
 		uri.RawQuery = values.Encode()
 
