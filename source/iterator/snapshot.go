@@ -44,6 +44,9 @@ type snapshot struct {
 	// after a pause that occurs just after the snapshot is completed.
 	// That's why this value is stored in a snapshot position.
 	resumeToken bson.Raw
+	// polling defines if the snapshot is used to detect insertions
+	// by polling for new documents in case CDC is not possible.
+	polling bool
 }
 
 // snapshotParams is an incoming params for the [newSnapshot] function.
@@ -81,6 +84,30 @@ func newSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) 
 	}, nil
 }
 
+// newPollingSnapshot creates a new instance of the [snapshot] iterator prepared for polling.
+func newPollingSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) {
+	pos := params.position
+	if pos == nil {
+		orderingFieldMaxValue, err := getMaxFieldValue(ctx, params.collection, params.orderingField)
+		if err != nil && !errors.Is(err, errNoDocuments) {
+			return nil, fmt.Errorf("get ordering field max value: %w", err)
+		}
+
+		pos = &position{
+			Mode:    modeCDC,
+			Element: orderingFieldMaxValue,
+		}
+	}
+
+	return &snapshot{
+		collection:    params.collection,
+		orderingField: params.orderingField,
+		batchSize:     params.batchSize,
+		position:      pos,
+		polling:       true,
+	}, nil
+}
+
 // hasNext checks whether the snapshot iterator has records to return or not.
 func (s *snapshot) hasNext(ctx context.Context) (bool, error) {
 	if s.cursor != nil && s.cursor.TryNext(ctx) {
@@ -101,9 +128,16 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 		return sdk.Record{}, fmt.Errorf("decode element: %w", err)
 	}
 
+	// if the snapshot is polling new items,
+	// we mark its position as CDC to identify it during pauses correctly
+	mode := modeSnapshot
+	if s.polling {
+		mode = modeCDC
+	}
+
 	// try to create and marshal the record position
 	position := &position{
-		Mode:        modeSnapshot,
+		Mode:        mode,
 		Element:     element[s.orderingField],
 		MaxElement:  s.orderingFieldMaxValue,
 		ResumeToken: s.resumeToken,
@@ -120,6 +154,13 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 	metadata := make(sdk.Metadata)
 	metadata[metadataFieldCollection] = s.collection.Name()
 	metadata.SetCreatedAt(time.Now())
+
+	if s.polling {
+		return sdk.Util.Source.NewRecordCreate(
+			sdkPosition, metadata,
+			sdk.StructuredData{idFieldName: element[idFieldName]}, sdk.StructuredData(element),
+		), nil
+	}
 
 	return sdk.Util.Source.NewRecordSnapshot(
 		sdkPosition, metadata,

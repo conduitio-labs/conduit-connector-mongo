@@ -38,6 +38,11 @@ The connector implements CDC features for MongoDB by using a Change Stream that 
 
 The connector stores a `resumeToken` of every Change Stream event in a position, so the CDC process is resumble.
 
+> **Warning**
+>
+> [Azure CosmosDB for MongoDB](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/change-streams) has very limited support for Change Streams, so they cannot be used for CDC. 
+> If CDC is not possible, like in the case with CosmosDB, the connector supports only insert operations by polling for new documents.
+
 ### Configuration
 
 | name                          | description                                                                                                                         | required | default                                                                                                                                                    |
