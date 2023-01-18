@@ -20,8 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -33,7 +35,10 @@ const metadataFieldCollection = "mongo.collection"
 // A snapshot is captured only if the snapshot is set to true.
 type Combined struct {
 	snapshot *snapshot
-	cdc      *cdc
+	// pollingSnapshot is used when CDC is not available.
+	// It supports insert operations only.
+	pollingSnapshot *snapshot
+	cdc             *cdc
 }
 
 // CombinedParams is an incoming params for the [NewCombined] function.
@@ -58,16 +63,33 @@ func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) 
 	// switch after the snapshot and start consuming events starting from the current time
 	combined.cdc, err = newCDC(ctx, params.Collection, position)
 	if err != nil {
-		return nil, fmt.Errorf("init cdc iterator: %w", err)
+		if !strings.Contains(err.Error(), matchProjectStageErrMessage) {
+			return nil, fmt.Errorf("init cdc iterator: %w", err)
+		}
+
+		combined.pollingSnapshot, err = newPollingSnapshot(ctx, snapshotParams{
+			collection:    params.Collection,
+			orderingField: params.OrderingField,
+			batchSize:     params.BatchSize,
+			position:      position,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("init polling snapshot: %w", err)
+		}
 	}
 
 	if params.Snapshot && (position == nil || position.Mode == modeSnapshot) {
+		var resumeToken bson.Raw
+		if combined.cdc != nil {
+			resumeToken = combined.cdc.changeStream.ResumeToken()
+		}
+
 		combined.snapshot, err = newSnapshot(ctx, snapshotParams{
 			collection:    params.Collection,
 			orderingField: params.OrderingField,
 			batchSize:     params.BatchSize,
 			position:      position,
-			resumeToken:   combined.cdc.changeStream.ResumeToken(),
+			resumeToken:   resumeToken,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("init snapshot iterator: %w", err)
@@ -93,10 +115,17 @@ func (c *Combined) HasNext(ctx context.Context) (bool, error) {
 			}
 			c.snapshot = nil
 
+			if c.pollingSnapshot != nil {
+				return c.pollingSnapshot.hasNext(ctx)
+			}
+
 			return c.cdc.hasNext(ctx)
 		}
 
 		return true, nil
+
+	case c.pollingSnapshot != nil:
+		return c.pollingSnapshot.hasNext(ctx)
 
 	case c.cdc != nil:
 		return c.cdc.hasNext(ctx)
@@ -113,6 +142,9 @@ func (c *Combined) Next(ctx context.Context) (sdk.Record, error) {
 	case c.snapshot != nil:
 		return c.snapshot.next(ctx)
 
+	case c.pollingSnapshot != nil:
+		return c.pollingSnapshot.next(ctx)
+
 	case c.cdc != nil:
 		return c.cdc.next(ctx)
 
@@ -127,6 +159,12 @@ func (c *Combined) Stop(ctx context.Context) error {
 	if c.snapshot != nil {
 		if err := c.snapshot.stop(ctx); err != nil {
 			return fmt.Errorf("stop snapshot: %w", err)
+		}
+	}
+
+	if c.pollingSnapshot != nil {
+		if err := c.pollingSnapshot.stop(ctx); err != nil {
+			return fmt.Errorf("stop polling snapshot: %w", err)
 		}
 	}
 

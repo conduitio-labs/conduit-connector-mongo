@@ -34,4 +34,9 @@ var (
 
 	// errNoDocuments occurs when there're no documents in a collection.
 	errNoDocuments = errors.New("no documents")
+
+	// matchProjectStageErrMessage contains an error text that Azure CosmosDB for MongoDB returns
+	// when you try to create a Change Stream.
+	// We use it to determine whether we should do snapshot polling instead of CDC.
+	matchProjectStageErrMessage = "Change stream must be followed by a match and then a project stage."
 )
