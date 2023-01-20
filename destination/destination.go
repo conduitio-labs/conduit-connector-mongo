@@ -21,6 +21,7 @@ import (
 
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
@@ -29,9 +30,12 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
-// registry registers StringObjectIDCodec.
+// bsoncodec.RegistryBuilder allows us to specify the logic of
+// decoding/encoding certain BSON types, that will be performed
+// inside the MongoDB Go driver.
 var registry = bson.NewRegistryBuilder().
 	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
+	RegisterDefaultEncoder(reflect.Array, bsoncodec.NewSliceCodec()).
 	Build()
 
 // Writer defines a writer interface needed for the [Destination].
