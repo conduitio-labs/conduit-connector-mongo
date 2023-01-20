@@ -26,6 +26,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -33,12 +34,11 @@ import (
 // bsoncodec.RegistryBuilder allows us to specify the logic of
 // decoding/encoding certain BSON types, that will be performed
 // inside the MongoDB Go driver.
-//
-// In this particular case we convert bson.ObjectID to string
-// when unmarshaling a raw BSON element to map[string]any, and vice versa.
 var registry = bson.NewRegistryBuilder().
 	RegisterTypeMapEntry(bsontype.ObjectID, reflect.TypeOf(string(""))).
+	RegisterTypeMapEntry(bsontype.Array, reflect.TypeOf([]any{})).
 	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
+	RegisterDefaultEncoder(reflect.Array, bsoncodec.NewSliceCodec()).
 	Build()
 
 // Iterator defines an Iterator interface needed for the [Source].
