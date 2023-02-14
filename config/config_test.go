@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -263,9 +263,7 @@ func TestParse(t *testing.T) {
 
 			got, err := Parse(tt.args.raw)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Parse() error = %v, wantErr %v", err, tt.wantErr)
-
-				return
+				t.Fatalf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

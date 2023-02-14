@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ func GetMongoCollection(ctx context.Context, client *mongo.Client, db, collectio
 	for _, databaseName := range databaseNames {
 		if databaseName == db {
 			databaseExist = true
+
+			break
 		}
 	}
 
@@ -53,6 +55,8 @@ func GetMongoCollection(ctx context.Context, client *mongo.Client, db, collectio
 	for _, collectionName := range collectionNames {
 		if collectionName == collection {
 			collectionExist = true
+
+			break
 		}
 	}
 
