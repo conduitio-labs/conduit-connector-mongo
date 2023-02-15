@@ -1,3 +1,9 @@
+**Test Run 2/8/2023 - Functional testing Azure Cosmos DB for MongoDB Source/Destination connector**
+
+**branch:** https://github.com/conduitio-labs/conduit-connector-mongo/tree/destination
+
+**commit** 4736288cfafd27f173cec45fded2453d6e76cc7a
+
 | ID       | Title                                                                                                                                                                                                                                                        | Status  | Comment                                    |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------ |
 | T3433115 | \----------------Required config------------------                                                                                                                                                                                                           | Passed  |                                            |
