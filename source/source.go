@@ -64,70 +64,64 @@ func NewSource() sdk.Source {
 
 // Parameters is a map of named Parameters that describe how to configure the [Source].
 //
-//nolint:funlen // yeah, this function can become long at some point.
+//nolint:funlen,nolintlint // yeah, this function can become long at some point.
 func (s *Source) Parameters() map[string]sdk.Parameter {
 	return map[string]sdk.Parameter{
 		config.KeyURI: {
-			Default:  "mongodb://localhost:27017",
-			Required: false,
+			Default: "mongodb://localhost:27017",
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
 		config.KeyDB: {
 			Default:     "",
-			Required:    true,
 			Description: "The name of a database the connector must work with.",
+			Validations: []sdk.Validation{
+				sdk.ValidationRequired{},
+			},
 		},
 		config.KeyCollection: {
 			Default:     "",
-			Required:    true,
 			Description: "The name of a collection the connector must read from.",
+			Validations: []sdk.Validation{
+				sdk.ValidationRequired{},
+			},
 		},
 		config.KeyAuthUsername: {
 			Default:     "",
-			Required:    false,
 			Description: "The username.",
 		},
 		config.KeyAuthPassword: {
 			Default:     "",
-			Required:    false,
 			Description: "The user's password.",
 		},
 		config.KeyAuthDB: {
 			Default:     "admin",
-			Required:    false,
 			Description: "The name of a database that contains the user's authentication data.",
 		},
 		config.KeyAuthMechanism: {
 			Default:     "The default mechanism that defined depending on your MongoDB server version.",
-			Required:    false,
 			Description: "The authentication mechanism.",
 		},
 		config.KeyAuthTLSCAFile: {
-			Default:  "",
-			Required: false,
+			Default: "",
 			Description: "The path to either a single or a bundle of certificate authorities" +
 				" to trust when making a TLS connection.",
 		},
 		config.KeyAuthTLSCertificateKeyFile: {
 			Default:     "",
-			Required:    false,
 			Description: "The path to the client certificate file or the client private key file.",
 		},
 		ConfigKeyBatchSize: {
 			Default:     "1000",
-			Required:    false,
 			Description: "The size of a document batch.",
 		},
 		ConfigKeySnapshot: {
-			Default:  "true",
-			Required: false,
+			Default: "true",
 			Description: "The field determines whether or not the connector " +
 				"will take a snapshot of the entire collection before starting CDC mode.",
 		},
 		ConfigKeyOrderingField: {
-			Default:  "_id",
-			Required: false,
+			Default: "_id",
 			Description: "The name of a field that is used for ordering " +
 				"collection documents when capturing a snapshot.",
 		},
