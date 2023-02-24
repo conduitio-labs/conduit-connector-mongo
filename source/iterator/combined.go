@@ -78,6 +78,8 @@ func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) 
 		}
 	}
 
+	// initialize the object only if the user has determined that it is required
+	// and if there is no position or the position mode is a snapshot
 	if params.Snapshot && (position == nil || position.Mode == modeSnapshot) {
 		var resumeToken bson.Raw
 		if combined.cdc != nil {
