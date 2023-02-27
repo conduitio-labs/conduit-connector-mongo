@@ -121,6 +121,7 @@ func TestDestination_Write_failInsertRecord(t *testing.T) {
 
 	_, err := d.Write(ctx, []sdk.Record{{}})
 	is.True(err != nil)
+	is.Equal(err.Error(), "write record: insert record: fail")
 }
 
 func TestDestination_Teardown_successWriterIsNil(t *testing.T) {
