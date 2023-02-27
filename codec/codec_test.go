@@ -25,6 +25,8 @@ import (
 )
 
 func TestStringObjectIDCodec_EncodeValue(t *testing.T) {
+	t.Parallel()
+
 	is := is.New(t)
 
 	err := StringObjectIDCodec{}.EncodeValue(
