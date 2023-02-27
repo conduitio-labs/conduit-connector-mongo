@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,8 @@ func TestSource_Configure_success(t *testing.T) {
 		config.KeyCollection: "users",
 	})
 	is.NoErr(err)
-	is.Equal(s.config, Config{
+
+	want := Config{
 		Config: config.Config{
 			URI: &url.URL{
 				Scheme: "mongodb",
@@ -53,7 +54,8 @@ func TestSource_Configure_success(t *testing.T) {
 		BatchSize:     defaultBatchSize,
 		Snapshot:      defaultSnapshot,
 		OrderingField: defaultOrderingField,
-	})
+	}
+	is.Equal(s.config, want)
 }
 
 func TestSource_Configure_failure(t *testing.T) {
@@ -123,7 +125,8 @@ func TestSource_Read_failHasNext(t *testing.T) {
 		iterator: it,
 	}
 
-	_, err := s.Read(ctx)
+	record, err := s.Read(ctx)
+	is.Equal(record, sdk.Record{})
 	is.True(err != nil)
 }
 

@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,10 +33,10 @@ var (
 	errMaxFieldValueNotFound = errors.New("max field value not found")
 
 	// errNoDocuments occurs when there're no documents in a collection.
-	errNoDocuments = errors.New("no documents")
+	errNoDocuments = errors.New("no documents in collection")
 
 	// matchProjectStageErrMessage contains an error text that Azure CosmosDB for MongoDB returns
 	// when you try to create a Change Stream.
 	// We use it to determine whether we should do snapshot polling instead of CDC.
-	matchProjectStageErrMessage = "Change stream must be followed by a match and then a project stage."
+	matchProjectStageErrMessage = "Change stream must be followed by a match and then a project stage"
 )

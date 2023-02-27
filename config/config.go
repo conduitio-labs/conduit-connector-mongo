@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,13 +26,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	// defaultConnectionURI is a default MongoDB connection URI string.
-	defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
-
-	// defaultServerSelectionTimeout is a default value for the ServerSelectionTimeout option.
-	defaultServerSelectionTimeout = time.Second * 5
-)
+// defaultConnectionURI is a default MongoDB connection URI string.
+var defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
 
 const (
 	// KeyURI is a config name for a connection string.
@@ -54,17 +49,14 @@ const (
 	// KeyAuthTLSCertificateKeyFile is a config name for a TLS certificate key file.
 	KeyAuthTLSCertificateKeyFile = "auth.tls.certificateKeyFile"
 	// KeyAuthAWSSessionToken is a config name for an AWS session token.
-	//
-	//nolint:gosec // it's not hardcoded credentials
-	KeyAuthAWSSessionToken = "auth.awsSessionToken"
-)
+	KeyAuthAWSSessionToken = "auth.awsSessionToken" //nolint:gosec // it's not hardcoded credential
 
-const (
+	// defaultServerSelectionTimeout is a default value for the ServerSelectionTimeout option.
+	defaultServerSelectionTimeout = time.Second * 5
+
 	// awsSessionTokenPropertyName is a name of a AWS session token property
 	// for the auth mechanism properties.
-	//
-	//nolint:gosec // it's not hardcoded credentials
-	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN"
+	awsSessionTokenPropertyName = "AWS_SESSION_TOKEN" //nolint:gosec // it's not hardcoded credentials
 	// tlsCAFile is a URL query name for a TLS CA file.
 	tlsCAFileQueryName = "tlsCAFile"
 	// tlsCertificateKeyFileQueryName is a URL query name for a TLS certificate key file.

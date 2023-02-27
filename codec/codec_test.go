@@ -12,16 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package codec
 
-import "fmt"
+import (
+	"reflect"
+	"testing"
 
-// InvalidAuthMechanismError occurs when a string is not a valid [AuthMechanism].
-type InvalidAuthMechanismError struct {
-	AuthMechanism AuthMechanism
-}
+	"github.com/brianvoe/gofakeit"
+	"github.com/matryer/is"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/bsonrw/bsonrwtest"
+)
 
-// Error returns a formatted error message for the [InvalidAuthMechanismError].
-func (e *InvalidAuthMechanismError) Error() string {
-	return fmt.Sprintf("invalid auth mechanism %q", e.AuthMechanism)
+func TestStringObjectIDCodec_EncodeValue(t *testing.T) {
+	t.Parallel()
+
+	is := is.New(t)
+
+	err := StringObjectIDCodec{}.EncodeValue(
+		bsoncodec.EncodeContext{},
+		new(bsonrwtest.ValueReaderWriter),
+		reflect.ValueOf(gofakeit.FirstName()),
+	)
+	is.NoErr(err)
 }

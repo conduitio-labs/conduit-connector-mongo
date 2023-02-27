@@ -1,4 +1,4 @@
-// Copyright © 2022 Meroxa, Inc. & Yalantis
+// Copyright © 2023 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ func newSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) 
 // newPollingSnapshot creates a new instance of the [snapshot] iterator prepared for polling.
 func newPollingSnapshot(ctx context.Context, params snapshotParams) (*snapshot, error) {
 	pos := params.position
-	if pos == nil {
+	if pos == nil || pos.Mode == modeSnapshot {
 		orderingFieldMaxValue, err := getMaxFieldValue(ctx, params.collection, params.orderingField)
 		if err != nil && !errors.Is(err, errNoDocuments) {
 			return nil, fmt.Errorf("get ordering field max value: %w", err)
