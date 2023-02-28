@@ -18,10 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
@@ -33,7 +35,6 @@ import (
 
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
-	testURI              = "mongodb://localhost:27017/?directConnection=true"
 	testDB               = "test_source"
 	testCollectionPrefix = "test_coll"
 )
@@ -470,8 +471,13 @@ func TestSource_Read_continueCDC(t *testing.T) {
 func prepareConfig(t *testing.T) map[string]string {
 	t.Helper()
 
+	uri := os.Getenv(common.TestEnvNameURI)
+	if uri == "" {
+		t.Skipf("%s env var must be set", common.TestEnvNameURI)
+	}
+
 	return map[string]string{
-		config.KeyURI:        testURI,
+		config.KeyURI:        uri,
 		config.KeyDB:         testDB,
 		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
 	}

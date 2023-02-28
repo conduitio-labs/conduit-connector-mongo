@@ -17,10 +17,12 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
@@ -31,7 +33,6 @@ import (
 
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
-	testURI              = "mongodb://localhost:27017/?directConnection=true"
 	testDB               = "test_acceptance"
 	testCollectionPrefix = "test_acceptance_coll"
 )
@@ -64,8 +65,13 @@ func (d driver) GenerateRecord(t *testing.T, operation sdk.Operation) sdk.Record
 }
 
 func TestAcceptance(t *testing.T) {
+	uri := os.Getenv(common.TestEnvNameURI)
+	if uri == "" {
+		t.Skipf("%s env var must be set", common.TestEnvNameURI)
+	}
+
 	cfg := map[string]string{
-		config.KeyURI: testURI,
+		config.KeyURI: uri,
 		config.KeyDB:  testDB,
 	}
 

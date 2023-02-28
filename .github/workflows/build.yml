@@ -17,4 +17,4 @@ jobs:
           go-version: 1.18
 
       - name: Test
-        run: make test MONGODB_STARTUP_TIMEOUT=8 GOTEST_FLAGS="-v -count=1 -race"
+        run: make test-integration MONGODB_STARTUP_TIMEOUT=8 GOTEST_FLAGS="-v -count=1 -race"

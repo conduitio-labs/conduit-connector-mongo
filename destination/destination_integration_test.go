@@ -18,10 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
@@ -35,7 +37,6 @@ import (
 
 const (
 	// set the directConnection to true in order to avoid the known hostname problem.
-	testURI              = "mongodb://localhost:27017/?directConnection=true"
 	testDB               = "test_destination"
 	testCollectionPrefix = "test_coll"
 
@@ -58,7 +59,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -102,7 +103,7 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -146,7 +147,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -199,7 +200,7 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -248,7 +249,7 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	err := destination.Configure(ctx, cfg)
 	is.NoErr(err)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -310,8 +311,8 @@ func compareTestPayload(
 	is.Equal(sdk.StructuredData(result), testRecordPayload)
 }
 
-func getTestCollection(ctx context.Context, collection string) (*mongo.Collection, error) {
-	conn, err := mongo.Connect(ctx, options.Client().ApplyURI(testURI))
+func getTestCollection(ctx context.Context, uri, collection string) (*mongo.Collection, error) {
+	conn, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, fmt.Errorf("connect to mongo: %w", err)
 	}
@@ -338,8 +339,13 @@ func createTestItem(t *testing.T) map[string]any {
 func prepareConfig(t *testing.T) map[string]string {
 	t.Helper()
 
+	uri := os.Getenv(common.TestEnvNameURI)
+	if uri == "" {
+		t.Skipf("%s env var must be set", common.TestEnvNameURI)
+	}
+
 	return map[string]string{
-		config.KeyURI:        testURI,
+		config.KeyURI:        uri,
 		config.KeyDB:         testDB,
 		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
 	}
