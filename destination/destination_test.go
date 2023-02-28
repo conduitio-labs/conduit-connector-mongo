@@ -98,10 +98,10 @@ func TestDestination_Write_success(t *testing.T) {
 		writer: it,
 	}
 
-	lines, err := d.Write(ctx, []sdk.Record{{}})
+	count, err := d.Write(ctx, []sdk.Record{{}})
 	is.NoErr(err)
 
-	is.Equal(lines, 1)
+	is.Equal(count, 1)
 }
 
 func TestDestination_Write_failInsertRecord(t *testing.T) {
