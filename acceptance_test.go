@@ -59,6 +59,9 @@ func (d driver) GenerateRecord(t *testing.T, operation sdk.Operation) sdk.Record
 				"name":       gofakeit.Name(),
 				"email":      gofakeit.Email(),
 				"created_at": time.Now().Format(time.RFC3339),
+				"float64":    gofakeit.Float64(),
+				"map":        map[string]any{"key1": gofakeit.Name(), "key2": gofakeit.Float64()},
+				"slice":      []any{gofakeit.Name(), gofakeit.Float64()},
 			},
 		},
 	}
