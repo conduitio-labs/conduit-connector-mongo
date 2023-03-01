@@ -18,10 +18,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/brianvoe/gofakeit"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw/bsonrwtest"
+	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestStringObjectIDCodec_EncodeValue(t *testing.T) {
@@ -29,10 +30,18 @@ func TestStringObjectIDCodec_EncodeValue(t *testing.T) {
 
 	is := is.New(t)
 
+	expectedObjectID := primitive.NewObjectID()
+
+	vrw := &bsonrwtest.ValueReaderWriter{BSONType: bsontype.ObjectID, Return: expectedObjectID}
+
 	err := StringObjectIDCodec{}.EncodeValue(
 		bsoncodec.EncodeContext{},
-		new(bsonrwtest.ValueReaderWriter),
-		reflect.ValueOf(gofakeit.FirstName()),
+		vrw,
+		reflect.ValueOf(expectedObjectID.Hex()),
 	)
 	is.NoErr(err)
+
+	actualObjectID, err := vrw.ReadObjectID()
+	is.NoErr(err)
+	is.Equal(expectedObjectID, actualObjectID)
 }
