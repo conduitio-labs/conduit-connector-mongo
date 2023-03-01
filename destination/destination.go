@@ -92,8 +92,9 @@ func (d *Destination) Parameters() map[string]sdk.Parameter {
 			Description: "The name of a database that contains the user's authentication data.",
 		},
 		config.KeyAuthMechanism: {
-			Default:     "The default mechanism that defined depending on your MongoDB server version.",
-			Description: "The authentication mechanism. ",
+			Default: "",
+			Description: "The authentication mechanism. " +
+				"The default mechanism, which is defined depending on the version of your MongoDB server.",
 		},
 		config.KeyAuthTLSCAFile: {
 			Default: "",
