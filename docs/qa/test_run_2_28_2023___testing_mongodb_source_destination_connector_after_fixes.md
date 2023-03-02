@@ -1,3 +1,15 @@
+**Test Run 2/28/2023 - Testing MongoDB Source/Destination connector after fixes**
+
+**branch:** https://github.com/conduitio-labs/conduit-connector-mongo/tree/destination
+
+**commit:** bdd1a6b6bc01c593dfc8daa9b063fa2f9098a9a8
+
+UPD (1/2/2023):
+
+**branch:** https://github.com/conduitio-labs/conduit-connector-mongo
+
+**commit:** ba7dff585b6ee5c03548d08d6581abd797100a83
+
 | ID       | Title                                                                                                                                                                                                                                                          | Status  | Comment                                    |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------ |
 | T3481970 | \----------------Required config------------------                                                                                                                                                                                                             | Passed  |                                            |
