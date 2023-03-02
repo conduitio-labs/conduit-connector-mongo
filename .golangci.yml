@@ -125,6 +125,9 @@ issues:
         - goerr113
         - maintidx
         - paralleltest # we don't want to run the integration tests in parallel because we want deterministic results
+    - path: acceptance_test
+      linters:
+        - paralleltest
     - path: codec 
       linters:
         - wrapcheck # the codec package contains mongo driver specific code and we don't need to wrap errors from there

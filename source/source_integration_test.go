@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -32,9 +33,8 @@ import (
 )
 
 const (
-	// set the directConnection to true in order to avoid the known hostname problem.
-	testURI              = "mongodb://localhost:27017/?directConnection=true"
-	testDB               = "test"
+	testEnvNameURI       = "CONNECTION_URI"
+	testDB               = "test_source"
 	testCollectionPrefix = "test_coll"
 )
 
@@ -470,8 +470,13 @@ func TestSource_Read_continueCDC(t *testing.T) {
 func prepareConfig(t *testing.T) map[string]string {
 	t.Helper()
 
+	uri := os.Getenv(testEnvNameURI)
+	if uri == "" {
+		t.Skipf("%s env var must be set", testEnvNameURI)
+	}
+
 	return map[string]string{
-		config.KeyURI:        testURI,
+		config.KeyURI:        uri,
 		config.KeyDB:         testDB,
 		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
 	}

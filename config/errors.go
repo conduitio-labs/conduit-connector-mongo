@@ -21,7 +21,7 @@ type InvalidAuthMechanismError struct {
 	AuthMechanism AuthMechanism
 }
 
-// Error returns a formated error message for the [InvalidAuthMechanismError].
+// Error returns a formatted error message for the [InvalidAuthMechanismError].
 func (e *InvalidAuthMechanismError) Error() string {
 	return fmt.Sprintf("invalid auth mechanism %q", e.AuthMechanism)
 }
