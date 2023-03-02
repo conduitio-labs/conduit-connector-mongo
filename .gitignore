@@ -2,6 +2,9 @@
 .idea
 .vscode
 
+### OS ###
+.DS_Store
+
 # binary
 conduit-connector-mongo
 

@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package config
 
-import (
-	sdk "github.com/conduitio/conduit-connector-sdk"
+import "fmt"
 
-	mongo "github.com/conduitio-labs/conduit-connector-mongo"
-)
+// InvalidAuthMechanismError occurs when a string is not a valid [AuthMechanism].
+type InvalidAuthMechanismError struct {
+	AuthMechanism AuthMechanism
+}
 
-func main() {
-	sdk.Serve(mongo.Connector)
+// Error returns a formatted error message for the [InvalidAuthMechanismError].
+func (e *InvalidAuthMechanismError) Error() string {
+	return fmt.Sprintf("invalid auth mechanism %q", e.AuthMechanism)
 }

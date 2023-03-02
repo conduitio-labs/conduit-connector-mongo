@@ -2,7 +2,7 @@ linters-settings:
   gofmt:
     simplify: false
   govet:
-    check-shadowing: false
+    check-shadowing: true
   nolintlint:
     allow-unused: false # report any unused nolint directives
     require-explanation: true # require an explanation for nolint directives
@@ -102,3 +102,32 @@ linters:
     # - testpackage
     # - wsl
     # - cyclop # not interested in package complexities at the moment
+
+# List of regexps of issue texts to exclude.
+issues:
+  exclude-rules:
+    - path: _test
+      linters:
+        - varnamelen
+        - testpackage
+        - nonamedreturns
+        - funlen # it can be annoying for table-driven tests
+        - dupl
+        - goerr113
+        - maintidx
+    - path: _integration_test
+      linters:
+        - varnamelen
+        - testpackage
+        - nonamedreturns
+        - funlen # it can be annoying for table-driven tests
+        - dupl
+        - goerr113
+        - maintidx
+        - paralleltest # we don't want to run the integration tests in parallel because we want deterministic results
+    - path: acceptance_test
+      linters:
+        - paralleltest
+    - path: codec 
+      linters:
+        - wrapcheck # the codec package contains mongo driver specific code and we don't need to wrap errors from there
