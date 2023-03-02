@@ -15,6 +15,7 @@
 package codec
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -22,17 +23,88 @@ import (
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw/bsonrwtest"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestStringObjectIDCodec_EncodeValue(t *testing.T) {
+// valueReaderWriter implements the [bsonrw.ValueWriter]
+// and overrides its WriteString and WriteObjectID methods
+// to use them within the StringObjectIDCodec.EncodeValue method.
+type valueReaderWriter struct {
+	bsonrwtest.ValueReaderWriter
+
+	value any
+}
+
+func newValueReaderWriter() *valueReaderWriter {
+	return &valueReaderWriter{}
+}
+
+func (vrw *valueReaderWriter) WriteString(s string) error {
+	vrw.value = s
+
+	return nil
+}
+
+func (vrw *valueReaderWriter) WriteObjectID(oid primitive.ObjectID) error {
+	vrw.value = oid
+
+	return nil
+}
+
+func TestStringObjectIDCodec_EncodeValue_ValidObjectID(t *testing.T) {
 	t.Parallel()
 
 	is := is.New(t)
+	codec := StringObjectIDCodec{}
 
-	err := StringObjectIDCodec{}.EncodeValue(
-		bsoncodec.EncodeContext{},
-		new(bsonrwtest.ValueReaderWriter),
-		reflect.ValueOf(gofakeit.FirstName()),
-	)
+	// create a valid primitive.ObjectID and its hex string representation
+	hexString := primitive.NewObjectID().Hex()
+	expectedObjectID, _ := primitive.ObjectIDFromHex(hexString)
+
+	// setup a test valueReaderWriter
+	vw := newValueReaderWriter()
+
+	// execute the EncodeValue with a hex string representation of a valid primitive.ObjectID,
+	// we expect to get it back as a primitive.ObjectID
+	err := codec.EncodeValue(bsoncodec.EncodeContext{}, vw, reflect.ValueOf(hexString))
 	is.NoErr(err)
+	is.Equal(vw.value, expectedObjectID)
+}
+
+func TestStringObjectIDCodec_EncodeValue_RandomString(t *testing.T) {
+	t.Parallel()
+
+	is := is.New(t)
+	codec := StringObjectIDCodec{}
+
+	// setup a test valueReaderWriter
+	vw := newValueReaderWriter()
+
+	// generate a random string
+	randomString := gofakeit.Zip()
+
+	// execute the EncodeValue with the random string, we expect to get it back as a string
+	err := codec.EncodeValue(bsoncodec.EncodeContext{}, vw, reflect.ValueOf(randomString))
+	is.NoErr(err)
+	is.Equal(vw.value, randomString)
+}
+
+func TestStringObjectIDCodec_EncodeValue_InvalidParameter(t *testing.T) {
+	t.Parallel()
+
+	is := is.New(t)
+	codec := StringObjectIDCodec{}
+
+	// setup a test valueReaderWriter
+	vw := newValueReaderWriter()
+
+	// generate a random integer
+	randomInt := gofakeit.Int8()
+
+	// execute the EncodeValue with the random integer, we expect to get a ValueEncoderError
+	err := codec.EncodeValue(bsoncodec.EncodeContext{}, vw, reflect.ValueOf(randomInt))
+	is.True(err != nil)
+	var valueEncoderError bsoncodec.ValueEncoderError
+	is.True(errors.As(err, &valueEncoderError))
+	is.Equal(valueEncoderError.Name, "StringEncodeValue")
 }
