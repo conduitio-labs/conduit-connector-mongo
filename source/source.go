@@ -131,7 +131,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 
 // Configure provides the connector with the configuration that is validated and stored.
 // In case the configuration is not valid it returns an error.
-func (s *Source) Configure(ctx context.Context, raw map[string]string) error {
+func (s *Source) Configure(_ context.Context, raw map[string]string) error {
 	sourceConfig, err := ParseConfig(raw)
 	if err != nil {
 		return fmt.Errorf("parse source config: %w", err)
