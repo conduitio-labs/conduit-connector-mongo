@@ -32,7 +32,7 @@ type StringObjectIDCodec struct{}
 //   - If a string can be converted into [bson.ObjectID] it returns it as a [bson.ObjectID].
 //   - If a string cannot be converted into [bson.ObjectID] it returns it as a string, without any transformations.
 func (sc StringObjectIDCodec) EncodeValue(
-	ectx bsoncodec.EncodeContext,
+	_ bsoncodec.EncodeContext,
 	vw bsonrw.ValueWriter,
 	val reflect.Value,
 ) error {

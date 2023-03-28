@@ -109,7 +109,7 @@ func (d *Destination) Parameters() map[string]sdk.Parameter {
 }
 
 // Configure parses and initializes the config.
-func (d *Destination) Configure(ctx context.Context, cfg map[string]string) error {
+func (d *Destination) Configure(_ context.Context, cfg map[string]string) error {
 	configuration, err := config.Parse(cfg)
 	if err != nil {
 		return fmt.Errorf("parse config: %w", err)

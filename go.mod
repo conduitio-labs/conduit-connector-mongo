@@ -1,6 +1,6 @@
 module github.com/conduitio-labs/conduit-connector-mongo
 
-go 1.18
+go 1.20
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.11.3
-	go.uber.org/multierr v1.9.0
+	go.uber.org/multierr v1.10.0
 )
 
 require (
@@ -48,7 +48,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.3 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.buf.build/grpc/go/conduitio/conduit-connector-protocol v1.4.5 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/exp v0.0.0-20221114191408-850992195362 // indirect
