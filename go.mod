@@ -9,7 +9,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.11.3
-	go.uber.org/multierr v1.10.0
+	go.uber.org/multierr v1.11.0
 )
 
 require (
