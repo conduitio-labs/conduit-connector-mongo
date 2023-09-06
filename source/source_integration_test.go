@@ -507,7 +507,11 @@ func createTestItem(ctx context.Context, collection *mongo.Collection) (sdk.Stru
 		return nil, fmt.Errorf("insert one: %w", err)
 	}
 
-	testItem["_id"] = insertOneResult.InsertedID.(primitive.ObjectID).Hex()
+	id, ok := insertOneResult.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, fmt.Errorf("expected ID to be an ObjectID, but got %T", insertOneResult.InsertedID)
+	}
+	testItem["_id"] = id.Hex()
 
 	return testItem, nil
 }
