@@ -507,7 +507,7 @@ func createTestItem(ctx context.Context, collection *mongo.Collection) (sdk.Stru
 		return nil, fmt.Errorf("insert one: %w", err)
 	}
 
-	testItem["_id"] = insertOneResult.InsertedID
+	testItem["_id"] = insertOneResult.InsertedID.(primitive.ObjectID).Hex()
 
 	return testItem, nil
 }
