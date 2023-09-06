@@ -90,7 +90,7 @@ func (am AuthMechanism) IsValid() bool {
 type Config struct {
 	// URI is the connection string.
 	// The URI can contain host names, IPv4/IPv6 literals, or an SRV record.
-	URI *url.URL `key:"uri" validate:"uri"`
+	URI *url.URL
 	// DB is the name of a database the connector must work with.
 	DB string `key:"db" validate:"required,max=64"`
 	// Collection is the name of a collection the connector must
