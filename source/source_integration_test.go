@@ -484,7 +484,7 @@ func prepareConfig(t *testing.T) map[string]string {
 
 // createTestMongoClient connects to a MongoDB by a provided URI.
 func createTestMongoClient(ctx context.Context, uri string) (*mongo.Client, error) {
-	opts := options.Client().ApplyURI(uri).SetRegistry(registry)
+	opts := options.Client().ApplyURI(uri).SetRegistry(newBSONCodecRegistry())
 
 	mongoClient, err := mongo.Connect(ctx, opts)
 	if err != nil {

@@ -27,19 +27,8 @@ import (
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
 	"go.mongodb.org/mongo-driver/mongo"
 )
-
-// bsoncodec.RegistryBuilder allows us to specify the logic of
-// decoding/encoding certain BSON types, that will be performed
-// inside the MongoDB Go driver.
-var registry = bson.NewRegistryBuilder().
-	RegisterTypeMapEntry(bsontype.ObjectID, reflect.TypeOf(string(""))).
-	RegisterTypeMapEntry(bsontype.Array, reflect.TypeOf([]any{})).
-	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
-	RegisterDefaultEncoder(reflect.Array, bsoncodec.NewSliceCodec()).
-	Build()
 
 // Iterator defines an Iterator interface needed for the [Source].
 type Iterator interface {
@@ -144,7 +133,7 @@ func (s *Source) Configure(_ context.Context, raw map[string]string) error {
 
 // Open opens needed connections and prepares to start producing records.
 func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
-	opts := s.config.GetClientOptions().SetRegistry(registry)
+	opts := s.config.GetClientOptions().SetRegistry(newBSONCodecRegistry())
 
 	var err error
 	s.client, err = mongo.Connect(ctx, opts)
@@ -173,6 +162,16 @@ func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
 	}
 
 	return nil
+}
+
+func newBSONCodecRegistry() *bsoncodec.Registry {
+	registry := bson.NewRegistry()
+
+	registry.RegisterTypeMapEntry(bson.TypeObjectID, reflect.TypeOf(""))
+	registry.RegisterTypeMapEntry(bson.TypeArray, reflect.TypeOf([]any{}))
+	registry.RegisterKindEncoder(reflect.String, codec.StringObjectIDCodec{})
+
+	return registry
 }
 
 // Read returns a new [sdk.Record].
