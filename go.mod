@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/conduitio/conduit-connector-sdk v0.7.2
-	github.com/go-playground/validator/v10 v10.14.1
+	github.com/go-playground/validator/v10 v10.15.3
 	github.com/golang/mock v1.6.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.11.7
