@@ -484,7 +484,7 @@ func prepareConfig(t *testing.T) map[string]string {
 
 // createTestMongoClient connects to a MongoDB by a provided URI.
 func createTestMongoClient(ctx context.Context, uri string) (*mongo.Client, error) {
-	opts := options.Client().ApplyURI(uri).SetRegistry(registry)
+	opts := options.Client().ApplyURI(uri).SetRegistry(newBSONCodecRegistry())
 
 	mongoClient, err := mongo.Connect(ctx, opts)
 	if err != nil {
@@ -507,7 +507,11 @@ func createTestItem(ctx context.Context, collection *mongo.Collection) (sdk.Stru
 		return nil, fmt.Errorf("insert one: %w", err)
 	}
 
-	testItem["_id"] = insertOneResult.InsertedID
+	id, ok := insertOneResult.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, fmt.Errorf("expected ID to be an ObjectID, but got %T", insertOneResult.InsertedID)
+	}
+	testItem["_id"] = id.Hex()
 
 	return testItem, nil
 }

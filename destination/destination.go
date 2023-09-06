@@ -30,14 +30,6 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
-// bsoncodec.RegistryBuilder allows us to specify the logic of
-// decoding/encoding certain BSON types, that will be performed
-// inside the MongoDB Go driver.
-var registry = bson.NewRegistryBuilder().
-	RegisterDefaultEncoder(reflect.String, codec.StringObjectIDCodec{}).
-	RegisterDefaultEncoder(reflect.Array, bsoncodec.NewSliceCodec()).
-	Build()
-
 // Writer defines a writer interface needed for the [Destination].
 type Writer interface {
 	Write(ctx context.Context, record sdk.Record) error
@@ -123,7 +115,7 @@ func (d *Destination) Configure(_ context.Context, cfg map[string]string) error 
 // Open makes sure everything is prepared to receive records.
 func (d *Destination) Open(ctx context.Context) error {
 	var err error
-	d.client, err = mongo.Connect(ctx, d.config.GetClientOptions().SetRegistry(registry))
+	d.client, err = mongo.Connect(ctx, d.config.GetClientOptions().SetRegistry(newBSONCodecRegistry()))
 	if err != nil {
 		return fmt.Errorf("connect to mongo: %w", err)
 	}
@@ -140,6 +132,13 @@ func (d *Destination) Open(ctx context.Context) error {
 	d.writer = writer.NewWriter(collection)
 
 	return nil
+}
+
+func newBSONCodecRegistry() *bsoncodec.Registry {
+	registry := bson.NewRegistry()
+	registry.RegisterKindEncoder(reflect.String, codec.StringObjectIDCodec{})
+
+	return registry
 }
 
 // Write writes a record into a Destination.
