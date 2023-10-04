@@ -16,6 +16,7 @@ package iterator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -84,15 +85,19 @@ func (e changeStreamEvent) toRecord() (sdk.Record, error) {
 	metadata[metadataFieldCollection] = e.Namespace.Collection
 	metadata.SetCreatedAt(e.WallTime)
 
+	docJSON, err := json.Marshal(e.FullDocument)
+	if err != nil {
+		return sdk.Record{}, fmt.Errorf("failed marshalling into JSON: %w", err)
+	}
 	switch e.OperationType {
 	case operationTypeInsert:
 		return sdk.Util.Source.NewRecordCreate(
-			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), sdk.StructuredData(e.FullDocument),
+			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), sdk.RawData(docJSON),
 		), nil
 
 	case operationTypeUpdate:
 		return sdk.Util.Source.NewRecordUpdate(
-			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), nil, sdk.StructuredData(e.FullDocument),
+			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), nil, sdk.RawData(docJSON),
 		), nil
 
 	case operationTypeDelete:
