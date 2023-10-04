@@ -16,6 +16,7 @@ package iterator
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -155,16 +156,25 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 	metadata[metadataFieldCollection] = s.collection.Name()
 	metadata.SetCreatedAt(time.Now())
 
+	elementBytes, err := json.Marshal(element)
+	if err != nil {
+		return sdk.Record{}, fmt.Errorf("failed marshalling record into JSON: %w", err)
+	}
+
 	if s.polling {
 		return sdk.Util.Source.NewRecordCreate(
-			sdkPosition, metadata,
-			sdk.StructuredData{idFieldName: element[idFieldName]}, sdk.StructuredData(element),
+			sdkPosition,
+			metadata,
+			sdk.StructuredData{idFieldName: element[idFieldName]},
+			sdk.RawData(elementBytes),
 		), nil
 	}
 
 	return sdk.Util.Source.NewRecordSnapshot(
-		sdkPosition, metadata,
-		sdk.StructuredData{idFieldName: element[idFieldName]}, sdk.StructuredData(element),
+		sdkPosition,
+		metadata,
+		sdk.StructuredData{idFieldName: element[idFieldName]},
+		sdk.RawData(elementBytes),
 	), nil
 }
 

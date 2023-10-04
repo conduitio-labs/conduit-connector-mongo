@@ -84,7 +84,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 			Description: "The user's password.",
 		},
 		config.KeyAuthDB: {
-			Default:     "admin",
+			Default:     "",
 			Description: "The name of a database that contains the user's authentication data.",
 		},
 		config.KeyAuthMechanism: {

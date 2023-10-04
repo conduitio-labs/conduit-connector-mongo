@@ -51,12 +51,12 @@ type position struct {
 
 // marshalSDKPosition marshals the underlying [position] into a [sdk.Position] as JSON bytes.
 func (p *position) marshalSDKPosition() (sdk.Position, error) {
-	positionBytes, err := json.Marshal(p)
+	bytes, err := json.Marshal(p)
 	if err != nil {
 		return nil, fmt.Errorf("marshal position: %w", err)
 	}
 
-	return sdk.Position(positionBytes), nil
+	return bytes, nil
 }
 
 // parsePosition converts an [sdk.Position] into a [position].
