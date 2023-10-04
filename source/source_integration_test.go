@@ -138,7 +138,7 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, testItem)
+	is.Equal(record.Payload.After, sdk.RawData(testItem.Bytes()))
 }
 
 func TestSource_Read_continueSnapshot(t *testing.T) {
@@ -186,7 +186,7 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, firstTestItem)
+	is.Equal(record.Payload.After, sdk.RawData(firstTestItem.Bytes()))
 
 	cancel()
 	ctx, cancel = context.WithCancel(context.Background())
@@ -205,7 +205,7 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, secondTestItem)
+	is.Equal(record.Payload.After, sdk.RawData(secondTestItem.Bytes()))
 }
 
 func TestSource_Read_successCDC(t *testing.T) {
@@ -254,7 +254,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, testItem)
+	is.Equal(record.Payload.After, sdk.RawData(testItem.Bytes()))
 
 	// update the test item
 	updatedTestItem, err := updateTestItem(ctx, testCollection, testItem)
@@ -264,7 +264,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, updatedTestItem)
+	is.Equal(record.Payload.After, sdk.RawData(updatedTestItem.Bytes()))
 
 	// delete the test item
 	err = deleteTestItem(ctx, testCollection, updatedTestItem)
@@ -318,7 +318,7 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, snapshotItem)
+	is.Equal(record.Payload.After, sdk.RawData(snapshotItem.Bytes()))
 
 	// stop the source
 	cancel()
@@ -344,13 +344,13 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, cdcCreateItem)
+	is.Equal(record.Payload.After, sdk.RawData(cdcCreateItem.Bytes()))
 
 	// compare the record operation and its payload
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, cdcUpdateItem)
+	is.Equal(record.Payload.After, sdk.RawData(cdcUpdateItem.Bytes()))
 }
 
 func TestSource_Read_continueCDC(t *testing.T) {
@@ -399,7 +399,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	record, err := source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, firstTestItem)
+	is.Equal(record.Payload.After, sdk.RawData(firstTestItem.Bytes()))
 
 	// stop the source
 	cancel()
@@ -426,13 +426,13 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, secondTestItem)
+	is.Equal(record.Payload.After, sdk.RawData(secondTestItem.Bytes()))
 
 	// check that the first item has been updated
 	record, err = source.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, updatedFirstItem)
+	is.Equal(record.Payload.After, sdk.RawData(updatedFirstItem.Bytes()))
 
 	// stop the source one more time
 	cancel()
