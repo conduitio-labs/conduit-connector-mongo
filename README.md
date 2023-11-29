@@ -9,7 +9,7 @@ The [MongoDB](https://www.mongodb.com/) connector is one of Conduit plugins. It 
 - [Go](https://go.dev/) 1.18+
 - [MongoDB](https://www.mongodb.com/) [replica set](https://www.mongodb.com/docs/manual/replication/) (at least single-node) or [sharded cluster](https://www.mongodb.com/docs/manual/sharding/) with [WiredTiger](https://www.mongodb.com/docs/manual/core/wiredtiger/) storage engine
 - [Docker](https://www.docker.com/)
-- (optional) [golangci-lint](https://github.com/golangci/golangci-lint) v1.50.1
+- (optional) [golangci-lint](https://github.com/golangci/golangci-lint) v1.55.2
 
 ### How to build it
 
