@@ -10,7 +10,7 @@ require (
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/golang/mock v1.6.0
 	github.com/matryer/is v1.4.1
-	go.mongodb.org/mongo-driver v1.13.0
+	go.mongodb.org/mongo-driver v1.13.1
 	go.uber.org/multierr v1.11.0
 )
 
