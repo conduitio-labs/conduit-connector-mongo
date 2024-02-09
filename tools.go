@@ -14,7 +14,7 @@
 
 //go:build tools
 
-package postgres
+package mongo
 
 import (
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
