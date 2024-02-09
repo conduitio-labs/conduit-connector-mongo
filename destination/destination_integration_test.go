@@ -23,15 +23,14 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
+	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
-	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
 const (

@@ -20,12 +20,11 @@ import (
 	"net/url"
 	"testing"
 
-	sdk "github.com/conduitio/conduit-connector-sdk"
-	"github.com/golang/mock/gomock"
-	"github.com/matryer/is"
-
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/mock"
+	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/matryer/is"
+	"go.uber.org/mock/gomock"
 )
 
 func TestDestination_Configure_success(t *testing.T) {

@@ -24,8 +24,8 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/mock"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-	"github.com/golang/mock/gomock"
 	"github.com/matryer/is"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSource_Configure_success(t *testing.T) {
