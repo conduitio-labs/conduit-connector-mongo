@@ -7,7 +7,7 @@ toolchain go1.21.1
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/conduitio/conduit-connector-sdk v0.8.0
-	github.com/go-playground/validator/v10 v10.18.0
+	github.com/go-playground/validator/v10 v10.19.0
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.14.0
