@@ -8,7 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/golangci/golangci-lint v1.59.1
 	github.com/matryer/is v1.4.1
-	go.mongodb.org/mongo-driver v1.15.0
+	go.mongodb.org/mongo-driver v1.15.1
 	go.uber.org/mock v0.4.0
 	go.uber.org/multierr v1.11.0
 )
