@@ -20,6 +20,7 @@ package source
 import (
 	"context"
 	"fmt"
+	"github.com/conduitio/conduit-commons/lang"
 	"reflect"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
@@ -52,7 +53,16 @@ type Source struct {
 
 // NewSource creates a new instance of the [Source].
 func NewSource() sdk.Source {
-	return sdk.SourceWithMiddleware(&Source{}, sdk.DefaultSourceMiddleware()...)
+	return sdk.SourceWithMiddleware(
+		&Source{},
+		sdk.DefaultSourceMiddleware(
+			// disable schema extraction by default, because the source produces raw data
+			sdk.SourceWithSchemaExtractionConfig{
+				PayloadEnabled: lang.Ptr(false),
+				KeyEnabled:     lang.Ptr(false),
+			},
+		)...,
+	)
 }
 
 // Parameters is a map of named Parameters that describe how to configure the [Source].
