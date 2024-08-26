@@ -25,6 +25,7 @@ import (
 	"github.com/brianvoe/gofakeit"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
@@ -73,11 +74,11 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordSnapshot(
+	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordSnapshot(
 		nil, nil,
 		// in insert keys are not used, so we can omit it
 		nil,
-		sdk.StructuredData(testItem),
+		opencdc.StructuredData(testItem),
 	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
@@ -118,11 +119,11 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	testItem := createTestItem(t)
 
 	n, err := destination.Write(ctx,
-		[]sdk.Record{sdk.Util.Source.NewRecordCreate(
+		[]opencdc.Record{sdk.Util.Source.NewRecordCreate(
 			nil,
 			nil,
 			nil,
-			sdk.StructuredData(testItem))})
+			opencdc.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
@@ -161,20 +162,20 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
-		sdk.StructuredData(testItem))})
+		opencdc.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
 	testItem[testNameFieldName] = gofakeit.LastName()
-	n, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordUpdate(
+	n, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
-		sdk.StructuredData{testIDFieldName: testItem[testIDFieldName]},
-		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNameFieldName: testItem[testNameFieldName]},
+		opencdc.StructuredData{testIDFieldName: testItem[testIDFieldName]},
+		opencdc.StructuredData{}, // in update we are not using this field, so we can omit it
+		opencdc.StructuredData{testNameFieldName: testItem[testNameFieldName]},
 	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
@@ -214,19 +215,19 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
-		sdk.StructuredData(testItem))})
+		opencdc.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	_, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordUpdate(
+	_, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
-		sdk.StructuredData{},
-		sdk.StructuredData{}, // in update we are not using this field, so we can omit it
-		sdk.StructuredData{testNameFieldName: gofakeit.LastName()},
+		opencdc.StructuredData{},
+		opencdc.StructuredData{}, // in update we are not using this field, so we can omit it
+		opencdc.StructuredData{testNameFieldName: gofakeit.LastName()},
 	)})
 	is.True(errors.Is(err, writer.ErrEmptyKey))
 
@@ -263,17 +264,17 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
-		sdk.StructuredData(testItem))})
+		opencdc.StructuredData(testItem))})
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []sdk.Record{sdk.Util.Source.NewRecordDelete(
+	n, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordDelete(
 		nil, nil,
-		sdk.StructuredData{testIDFieldName: testItem[testIDFieldName]},
+		opencdc.StructuredData{testIDFieldName: testItem[testIDFieldName]}, nil,
 	)})
 	is.NoErr(err)
 	is.Equal(n, 1)
@@ -291,7 +292,7 @@ func compareTestPayload(
 	t *testing.T,
 	is *is.I,
 	col *mongo.Collection,
-	testRecordPayload sdk.StructuredData,
+	testRecordPayload opencdc.StructuredData,
 ) {
 	t.Helper()
 
@@ -306,7 +307,7 @@ func compareTestPayload(
 	err = res.Decode(&result)
 	is.NoErr(err)
 
-	is.Equal(sdk.StructuredData(result), testRecordPayload)
+	is.Equal(opencdc.StructuredData(result), testRecordPayload)
 }
 
 func getTestCollection(ctx context.Context, uri, collection string) (*mongo.Collection, error) {

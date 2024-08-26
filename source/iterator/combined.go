@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"strings"
 
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -47,7 +47,7 @@ type CombinedParams struct {
 	BatchSize     int
 	Snapshot      bool
 	OrderingField string
-	SDKPosition   sdk.Position
+	SDKPosition   opencdc.Position
 }
 
 // NewCombined creates a new instance of the [Combined].
@@ -139,7 +139,7 @@ func (c *Combined) HasNext(ctx context.Context) (bool, error) {
 }
 
 // Next returns the next record.
-func (c *Combined) Next(ctx context.Context) (sdk.Record, error) {
+func (c *Combined) Next(ctx context.Context) (opencdc.Record, error) {
 	switch {
 	case c.snapshot != nil:
 		return c.snapshot.next(ctx)
@@ -152,7 +152,7 @@ func (c *Combined) Next(ctx context.Context) (sdk.Record, error) {
 
 	default:
 		// this shouldn't happen
-		return sdk.Record{}, ErrNoIterator
+		return opencdc.Record{}, ErrNoIterator
 	}
 }
 

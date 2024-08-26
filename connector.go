@@ -17,10 +17,9 @@
 package mongo
 
 import (
+	"github.com/conduitio-labs/conduit-connector-mongo/destination"
 	"github.com/conduitio-labs/conduit-connector-mongo/source"
 	sdk "github.com/conduitio/conduit-connector-sdk"
-
-	"github.com/conduitio-labs/conduit-connector-mongo/destination"
 )
 
 var Connector = sdk.Connector{

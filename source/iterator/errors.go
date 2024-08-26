@@ -25,7 +25,7 @@ var (
 	// It's just a sentinel error for the [changeStreamEvent.toRecord] method.
 	errUnsupportedOperationType = errors.New("unsupported operation type")
 
-	// errNilSDKPosition occurs when trying to parse a nil [sdk.Position].
+	// errNilSDKPosition occurs when trying to parse a nil [opencdc.Position].
 	// It's just a sentinel error for the [parsePosition] function.
 	errNilSDKPosition = errors.New("nil sdk position")
 

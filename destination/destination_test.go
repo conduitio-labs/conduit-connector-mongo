@@ -22,7 +22,7 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/mock"
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/matryer/is"
 	"go.uber.org/mock/gomock"
 )
@@ -91,13 +91,13 @@ func TestDestination_Write_success(t *testing.T) {
 	ctx := context.Background()
 
 	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().Write(ctx, sdk.Record{}).Return(nil)
+	it.EXPECT().Write(ctx, opencdc.Record{}).Return(nil)
 
 	d := Destination{
 		writer: it,
 	}
 
-	count, err := d.Write(ctx, []sdk.Record{{}})
+	count, err := d.Write(ctx, []opencdc.Record{{}})
 	is.NoErr(err)
 
 	is.Equal(count, 1)
@@ -112,13 +112,13 @@ func TestDestination_Write_failInsertRecord(t *testing.T) {
 	ctx := context.Background()
 
 	it := mock.NewMockWriter(ctrl)
-	it.EXPECT().Write(ctx, sdk.Record{}).Return(errors.New("insert record: fail"))
+	it.EXPECT().Write(ctx, opencdc.Record{}).Return(errors.New("insert record: fail"))
 
 	d := Destination{
 		writer: it,
 	}
 
-	_, err := d.Write(ctx, []sdk.Record{{}})
+	_, err := d.Write(ctx, []opencdc.Record{{}})
 	is.True(err != nil)
 	is.Equal(err.Error(), "write record: insert record: fail")
 }
