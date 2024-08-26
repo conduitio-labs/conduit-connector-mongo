@@ -20,7 +20,6 @@ package source
 import (
 	"context"
 	"fmt"
-	"github.com/conduitio/conduit-commons/lang"
 	"reflect"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
@@ -28,6 +27,7 @@ import (
 	mconfig "github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
 	"github.com/conduitio/conduit-commons/config"
+	"github.com/conduitio/conduit-commons/lang"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
