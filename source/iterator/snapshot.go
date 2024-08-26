@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -123,10 +124,10 @@ func (s *snapshot) hasNext(ctx context.Context) (bool, error) {
 }
 
 // next returns the next record.
-func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
+func (s *snapshot) next(_ context.Context) (opencdc.Record, error) {
 	var element map[string]any
 	if err := s.cursor.Decode(&element); err != nil {
-		return sdk.Record{}, fmt.Errorf("decode element: %w", err)
+		return opencdc.Record{}, fmt.Errorf("decode element: %w", err)
 	}
 
 	// if the snapshot is polling new items,
@@ -146,35 +147,35 @@ func (s *snapshot) next(_ context.Context) (sdk.Record, error) {
 
 	sdkPosition, err := position.marshalSDKPosition()
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("marshal sdk position: %w", err)
+		return opencdc.Record{}, fmt.Errorf("marshal sdk position: %w", err)
 	}
 
 	s.position = position
 
 	// set the record metadata
-	metadata := make(sdk.Metadata)
+	metadata := make(opencdc.Metadata)
 	metadata[metadataFieldCollection] = s.collection.Name()
 	metadata.SetCreatedAt(time.Now())
 
 	elementBytes, err := json.Marshal(element)
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("failed marshalling record into JSON: %w", err)
+		return opencdc.Record{}, fmt.Errorf("failed marshalling record into JSON: %w", err)
 	}
 
 	if s.polling {
 		return sdk.Util.Source.NewRecordCreate(
 			sdkPosition,
 			metadata,
-			sdk.StructuredData{idFieldName: element[idFieldName]},
-			sdk.RawData(elementBytes),
+			opencdc.StructuredData{idFieldName: element[idFieldName]},
+			opencdc.RawData(elementBytes),
 		), nil
 	}
 
 	return sdk.Util.Source.NewRecordSnapshot(
 		sdkPosition,
 		metadata,
-		sdk.StructuredData{idFieldName: element[idFieldName]},
-		sdk.RawData(elementBytes),
+		opencdc.StructuredData{idFieldName: element[idFieldName]},
+		opencdc.RawData(elementBytes),
 	), nil
 }
 

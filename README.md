@@ -68,7 +68,7 @@ If the `_id` field is `bson.ObjectID` the connector converts it to a string when
 
 ## Destination
 
-The MongoDB Destination takes a `sdk.Record` and parses it into a valid MongoDB query. The Destination is designed to handle different payloads and keys. Because of this, each record is individually parsed and written.
+The MongoDB Destination takes a `opencdc.Record` and parses it into a valid MongoDB query. The Destination is designed to handle different payloads and keys. Because of this, each record is individually parsed and written.
 
 ### Collection name
 
@@ -90,6 +90,6 @@ If a record contains a `mongo.collection` property in its metadata it will be wr
 
 ### Key handling
 
-The connector uses all keys from an `sdk.Record` when updating and deleting documents.
+The connector uses all keys from an `opencdc.Record` when updating and deleting documents.
 
 If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is.

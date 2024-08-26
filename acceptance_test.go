@@ -23,6 +23,7 @@ import (
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -42,18 +43,18 @@ type driver struct {
 
 // GenerateRecord overrides the [sdk.ConfigurableAcceptanceTestDriver] GenerateRecord method.
 // It generates a MongoDB-specific payload and a random bson.ObjectID key converted to a string.
-func (d driver) GenerateRecord(t *testing.T, operation sdk.Operation) sdk.Record {
+func (d driver) GenerateRecord(t *testing.T, operation opencdc.Operation) opencdc.Record {
 	t.Helper()
 
 	id := primitive.NewObjectID().String()
 
-	return sdk.Record{
+	return opencdc.Record{
 		Operation: operation,
-		Key: sdk.StructuredData{
+		Key: opencdc.StructuredData{
 			"_id": id,
 		},
-		Payload: sdk.Change{
-			After: sdk.StructuredData{
+		Payload: opencdc.Change{
+			After: opencdc.StructuredData{
 				"_id":        id,
 				"name":       gofakeit.Name(),
 				"email":      gofakeit.Email(),

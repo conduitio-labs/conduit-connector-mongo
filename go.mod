@@ -1,8 +1,12 @@
 module github.com/conduitio-labs/conduit-connector-mongo
 
-go 1.22.2
+go 1.22.5
+
+toolchain go1.22.6
+
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
+	github.com/conduitio/conduit-commons v0.3.0
 	github.com/conduitio/conduit-connector-sdk v0.10.0
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/golangci/golangci-lint v1.59.1
@@ -48,7 +52,6 @@ require (
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/chavacava/garif v0.1.0 // indirect
 	github.com/ckaznocha/intrange v0.1.2 // indirect
-	github.com/conduitio/conduit-commons v0.3.0 // indirect
 	github.com/conduitio/conduit-connector-protocol v0.7.0 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
 	github.com/daixiang0/gci v0.13.4 // indirect

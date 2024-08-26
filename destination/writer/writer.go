@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -50,8 +51,8 @@ func NewWriter(collection *mongo.Collection) *Writer {
 	return writer
 }
 
-// Write writes a sdk.Record into a Destination.
-func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
+// Write writes a opencdc.Record into a Destination.
+func (w *Writer) Write(ctx context.Context, record opencdc.Record) error {
 	if err := sdk.Util.Destination.Route(ctx, record,
 		w.insert,
 		w.update,
@@ -64,8 +65,8 @@ func (w *Writer) Write(ctx context.Context, record sdk.Record) error {
 	return nil
 }
 
-func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
-	payload := make(sdk.StructuredData)
+func (w *Writer) insert(ctx context.Context, record opencdc.Record) error {
+	payload := make(opencdc.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
@@ -77,15 +78,15 @@ func (w *Writer) insert(ctx context.Context, record sdk.Record) error {
 	return nil
 }
 
-func (w *Writer) update(ctx context.Context, record sdk.Record) error {
-	payload := make(sdk.StructuredData)
+func (w *Writer) update(ctx context.Context, record opencdc.Record) error {
+	payload := make(opencdc.StructuredData)
 	if err := json.Unmarshal(record.Payload.After.Bytes(), &payload); err != nil {
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
 	delete(payload, idFieldName) // deleting key from payload arguments
 
-	keys := make(sdk.StructuredData)
+	keys := make(opencdc.StructuredData)
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("unmarshal keys: %w", err)
 	}
@@ -100,8 +101,8 @@ func (w *Writer) update(ctx context.Context, record sdk.Record) error {
 	return nil
 }
 
-func (w *Writer) delete(ctx context.Context, record sdk.Record) error {
-	keys := make(sdk.StructuredData)
+func (w *Writer) delete(ctx context.Context, record opencdc.Record) error {
+	keys := make(opencdc.StructuredData)
 	if err := json.Unmarshal(record.Key.Bytes(), &keys); err != nil {
 		return fmt.Errorf("unmarshal keys: %w", err)
 	}

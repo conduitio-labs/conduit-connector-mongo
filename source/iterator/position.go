@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sdk "github.com/conduitio/conduit-connector-sdk"
+	"github.com/conduitio/conduit-commons/opencdc"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -49,8 +49,8 @@ type position struct {
 	MaxElement any `json:"maxElement,omitempty"`
 }
 
-// marshalSDKPosition marshals the underlying [position] into a [sdk.Position] as JSON bytes.
-func (p *position) marshalSDKPosition() (sdk.Position, error) {
+// marshalSDKPosition marshals the underlying [position] into a [opencdc.Position] as JSON bytes.
+func (p *position) marshalSDKPosition() (opencdc.Position, error) {
 	bytes, err := json.Marshal(p)
 	if err != nil {
 		return nil, fmt.Errorf("marshal position: %w", err)
@@ -59,15 +59,15 @@ func (p *position) marshalSDKPosition() (sdk.Position, error) {
 	return bytes, nil
 }
 
-// parsePosition converts an [sdk.Position] into a [position].
-func parsePosition(sdkPosition sdk.Position) (*position, error) {
+// parsePosition converts an [opencdc.Position] into a [position].
+func parsePosition(sdkPosition opencdc.Position) (*position, error) {
 	if sdkPosition == nil {
 		return nil, errNilSDKPosition
 	}
 
 	var pos position
 	if err := json.Unmarshal(sdkPosition, &pos); err != nil {
-		return nil, fmt.Errorf("unmarshal sdk.Position into position: %w", err)
+		return nil, fmt.Errorf("unmarshal opencdc.Position into position: %w", err)
 	}
 
 	return &pos, nil

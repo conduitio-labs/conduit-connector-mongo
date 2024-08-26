@@ -21,20 +21,21 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/conduitio-labs/conduit-connector-mongo/codec"
+	"github.com/conduitio-labs/conduit-connector-mongo/common"
+	mconfig "github.com/conduitio-labs/conduit-connector-mongo/config"
+	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
+	"github.com/conduitio/conduit-commons/config"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/mongo"
-
-	"github.com/conduitio-labs/conduit-connector-mongo/codec"
-	"github.com/conduitio-labs/conduit-connector-mongo/common"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
-	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 )
 
 // Writer defines a writer interface needed for the [Destination].
 type Writer interface {
-	Write(ctx context.Context, record sdk.Record) error
+	Write(ctx context.Context, record opencdc.Record) error
 }
 
 // Destination Mongo Connector persists records to a MongoDB.
@@ -43,7 +44,7 @@ type Destination struct {
 
 	writer Writer
 	client *mongo.Client
-	config config.Config
+	config mconfig.Config
 }
 
 // NewDestination creates new instance of the Destination.
@@ -52,50 +53,50 @@ func NewDestination() sdk.Destination {
 }
 
 // Parameters is a map of named Parameters that describe how to configure the Destination.
-func (d *Destination) Parameters() map[string]sdk.Parameter {
-	return map[string]sdk.Parameter{
-		config.KeyURI: {
+func (d *Destination) Parameters() config.Parameters {
+	return map[string]config.Parameter{
+		mconfig.KeyURI: {
 			Default: "mongodb://localhost:27017",
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
-		config.KeyDB: {
+		mconfig.KeyDB: {
 			Default:     "",
 			Description: "The name of a database the connector must work with.",
-			Validations: []sdk.Validation{
-				sdk.ValidationRequired{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
 			},
 		},
-		config.KeyCollection: {
+		mconfig.KeyCollection: {
 			Default:     "",
 			Description: "The name of a collection the connector must read from.",
-			Validations: []sdk.Validation{
-				sdk.ValidationRequired{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
 			},
 		},
-		config.KeyAuthUsername: {
+		mconfig.KeyAuthUsername: {
 			Default:     "",
 			Description: "The username.",
 		},
-		config.KeyAuthPassword: {
+		mconfig.KeyAuthPassword: {
 			Default:     "",
 			Description: "The user's password.",
 		},
-		config.KeyAuthDB: {
+		mconfig.KeyAuthDB: {
 			Default:     "admin",
 			Description: "The name of a database that contains the user's authentication data.",
 		},
-		config.KeyAuthMechanism: {
+		mconfig.KeyAuthMechanism: {
 			Default: "",
 			Description: "The authentication mechanism. " +
 				"The default mechanism, which is defined depending on the version of your MongoDB server.",
 		},
-		config.KeyAuthTLSCAFile: {
+		mconfig.KeyAuthTLSCAFile: {
 			Default: "",
 			Description: "The path to either a single or a bundle of certificate authorities" +
 				" to trust when making a TLS connection.",
 		},
-		config.KeyAuthTLSCertificateKeyFile: {
+		mconfig.KeyAuthTLSCertificateKeyFile: {
 			Default:     "",
 			Description: "The path to the client certificate file or the client private key file.",
 		},
@@ -103,8 +104,8 @@ func (d *Destination) Parameters() map[string]sdk.Parameter {
 }
 
 // Configure parses and initializes the config.
-func (d *Destination) Configure(_ context.Context, cfg map[string]string) error {
-	configuration, err := config.Parse(cfg)
+func (d *Destination) Configure(_ context.Context, cfg config.Config) error {
+	configuration, err := mconfig.Parse(cfg)
 	if err != nil {
 		return fmt.Errorf("parse config: %w", err)
 	}
@@ -144,7 +145,7 @@ func newBSONCodecRegistry() *bsoncodec.Registry {
 }
 
 // Write writes a record into a Destination.
-func (d *Destination) Write(ctx context.Context, records []sdk.Record) (int, error) {
+func (d *Destination) Write(ctx context.Context, records []opencdc.Record) (int, error) {
 	for i, record := range records {
 		if err := d.writer.Write(ctx, record); err != nil {
 			return i, fmt.Errorf("write record: %w", err)

@@ -24,6 +24,7 @@ import (
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
@@ -137,8 +138,8 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 
 	record, err := source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, sdk.RawData(testItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationSnapshot)
+	is.Equal(record.Payload.After, opencdc.RawData(testItem.Bytes()))
 }
 
 func TestSource_Read_continueSnapshot(t *testing.T) {
@@ -185,8 +186,8 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	// check the first item
 	record, err := source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, sdk.RawData(firstTestItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationSnapshot)
+	is.Equal(record.Payload.After, opencdc.RawData(firstTestItem.Bytes()))
 
 	cancel()
 	ctx, cancel = context.WithCancel(context.Background())
@@ -204,8 +205,8 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	// after the pause
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, sdk.RawData(secondTestItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationSnapshot)
+	is.Equal(record.Payload.After, opencdc.RawData(secondTestItem.Bytes()))
 }
 
 func TestSource_Read_successCDC(t *testing.T) {
@@ -253,8 +254,8 @@ func TestSource_Read_successCDC(t *testing.T) {
 	// compare the record operation and its payload
 	record, err := source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, sdk.RawData(testItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationCreate)
+	is.Equal(record.Payload.After, opencdc.RawData(testItem.Bytes()))
 
 	// update the test item
 	updatedTestItem, err := updateTestItem(ctx, testCollection, testItem)
@@ -263,8 +264,8 @@ func TestSource_Read_successCDC(t *testing.T) {
 	// compare the record operation and its payload
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, sdk.RawData(updatedTestItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationUpdate)
+	is.Equal(record.Payload.After, opencdc.RawData(updatedTestItem.Bytes()))
 
 	// delete the test item
 	err = deleteTestItem(ctx, testCollection, updatedTestItem)
@@ -273,7 +274,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	// compare the record operation, we expect it to be delete
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationDelete)
+	is.Equal(record.Operation, opencdc.OperationDelete)
 }
 
 func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
@@ -317,8 +318,8 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	// we expect a snapshot record
 	record, err := source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationSnapshot)
-	is.Equal(record.Payload.After, sdk.RawData(snapshotItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationSnapshot)
+	is.Equal(record.Payload.After, opencdc.RawData(snapshotItem.Bytes()))
 
 	// stop the source
 	cancel()
@@ -343,14 +344,14 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	// compare the record operation and its payload
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, sdk.RawData(cdcCreateItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationCreate)
+	is.Equal(record.Payload.After, opencdc.RawData(cdcCreateItem.Bytes()))
 
 	// compare the record operation and its payload
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, sdk.RawData(cdcUpdateItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationUpdate)
+	is.Equal(record.Payload.After, opencdc.RawData(cdcUpdateItem.Bytes()))
 }
 
 func TestSource_Read_continueCDC(t *testing.T) {
@@ -398,8 +399,8 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	// compare the record operation and its payload
 	record, err := source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, sdk.RawData(firstTestItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationCreate)
+	is.Equal(record.Payload.After, opencdc.RawData(firstTestItem.Bytes()))
 
 	// stop the source
 	cancel()
@@ -425,14 +426,14 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	// check that the second item has been inserted
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationCreate)
-	is.Equal(record.Payload.After, sdk.RawData(secondTestItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationCreate)
+	is.Equal(record.Payload.After, opencdc.RawData(secondTestItem.Bytes()))
 
 	// check that the first item has been updated
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationUpdate)
-	is.Equal(record.Payload.After, sdk.RawData(updatedFirstItem.Bytes()))
+	is.Equal(record.Operation, opencdc.OperationUpdate)
+	is.Equal(record.Payload.After, opencdc.RawData(updatedFirstItem.Bytes()))
 
 	// stop the source one more time
 	cancel()
@@ -457,13 +458,13 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	// check that both items have been deleted
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationDelete)
-	is.Equal(record.Key, sdk.StructuredData{"_id": firstTestItem["_id"]})
+	is.Equal(record.Operation, opencdc.OperationDelete)
+	is.Equal(record.Key, opencdc.StructuredData{"_id": firstTestItem["_id"]})
 
 	record, err = source.Read(ctx)
 	is.NoErr(err)
-	is.Equal(record.Operation, sdk.OperationDelete)
-	is.Equal(record.Key, sdk.StructuredData{"_id": secondTestItem["_id"]})
+	is.Equal(record.Operation, opencdc.OperationDelete)
+	is.Equal(record.Key, opencdc.StructuredData{"_id": secondTestItem["_id"]})
 }
 
 // prepareConfig prepares a config with the required fields.
@@ -495,7 +496,7 @@ func createTestMongoClient(ctx context.Context, uri string) (*mongo.Client, erro
 }
 
 // createTestItem writes a random item to a collection and returns it.
-func createTestItem(ctx context.Context, collection *mongo.Collection) (sdk.StructuredData, error) {
+func createTestItem(ctx context.Context, collection *mongo.Collection) (opencdc.StructuredData, error) {
 	testItem := map[string]any{
 		"email":     gofakeit.Email(),
 		"firstName": gofakeit.FirstName(),
@@ -521,14 +522,14 @@ func createTestItem(ctx context.Context, collection *mongo.Collection) (sdk.Stru
 func updateTestItem(
 	ctx context.Context,
 	collection *mongo.Collection,
-	testItem sdk.StructuredData,
-) (sdk.StructuredData, error) {
+	testItem opencdc.StructuredData,
+) (opencdc.StructuredData, error) {
 	newEmail := gofakeit.Email()
 	newFirstName := gofakeit.FirstName()
 
 	// copy the testItem into the new updatedTestItem,
 	// in order not to modify the original testItem
-	updatedTestItem := make(sdk.StructuredData)
+	updatedTestItem := make(opencdc.StructuredData)
 	for key, value := range testItem {
 		updatedTestItem[key] = value
 	}
@@ -563,7 +564,7 @@ func updateTestItem(
 func deleteTestItem(
 	ctx context.Context,
 	collection *mongo.Collection,
-	testItem sdk.StructuredData,
+	testItem opencdc.StructuredData,
 ) error {
 	testItemID, ok := testItem["_id"].(string)
 	if !ok {

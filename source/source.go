@@ -24,8 +24,10 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/common"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	mconfig "github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
+	"github.com/conduitio/conduit-commons/config"
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
@@ -35,7 +37,7 @@ import (
 // Iterator defines an Iterator interface needed for the [Source].
 type Iterator interface {
 	HasNext(context.Context) (bool, error)
-	Next(context.Context) (sdk.Record, error)
+	Next(context.Context) (opencdc.Record, error)
 	Stop(context.Context) error
 }
 
@@ -56,50 +58,50 @@ func NewSource() sdk.Source {
 // Parameters is a map of named Parameters that describe how to configure the [Source].
 //
 //nolint:funlen,nolintlint // yeah, this function can become long at some point.
-func (s *Source) Parameters() map[string]sdk.Parameter {
-	return map[string]sdk.Parameter{
-		config.KeyURI: {
+func (s *Source) Parameters() config.Parameters {
+	return map[string]config.Parameter{
+		mconfig.KeyURI: {
 			Default: "mongodb://localhost:27017",
 			Description: "The connection string. " +
 				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
 		},
-		config.KeyDB: {
+		mconfig.KeyDB: {
 			Default:     "",
 			Description: "The name of a database the connector must work with.",
-			Validations: []sdk.Validation{
-				sdk.ValidationRequired{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
 			},
 		},
-		config.KeyCollection: {
+		mconfig.KeyCollection: {
 			Default:     "",
 			Description: "The name of a collection the connector must read from.",
-			Validations: []sdk.Validation{
-				sdk.ValidationRequired{},
+			Validations: []config.Validation{
+				config.ValidationRequired{},
 			},
 		},
-		config.KeyAuthUsername: {
+		mconfig.KeyAuthUsername: {
 			Default:     "",
 			Description: "The username.",
 		},
-		config.KeyAuthPassword: {
+		mconfig.KeyAuthPassword: {
 			Default:     "",
 			Description: "The user's password.",
 		},
-		config.KeyAuthDB: {
+		mconfig.KeyAuthDB: {
 			Default:     "",
 			Description: "The name of a database that contains the user's authentication data.",
 		},
-		config.KeyAuthMechanism: {
+		mconfig.KeyAuthMechanism: {
 			Default: "",
 			Description: "The authentication mechanism. " +
 				"The default mechanism, which is defined depending on the version of your MongoDB server.",
 		},
-		config.KeyAuthTLSCAFile: {
+		mconfig.KeyAuthTLSCAFile: {
 			Default: "",
 			Description: "The path to either a single or a bundle of certificate authorities" +
 				" to trust when making a TLS connection.",
 		},
-		config.KeyAuthTLSCertificateKeyFile: {
+		mconfig.KeyAuthTLSCertificateKeyFile: {
 			Default:     "",
 			Description: "The path to the client certificate file or the client private key file.",
 		},
@@ -122,7 +124,7 @@ func (s *Source) Parameters() map[string]sdk.Parameter {
 
 // Configure provides the connector with the configuration that is validated and stored.
 // In case the configuration is not valid it returns an error.
-func (s *Source) Configure(_ context.Context, raw map[string]string) error {
+func (s *Source) Configure(_ context.Context, raw config.Config) error {
 	sourceConfig, err := ParseConfig(raw)
 	if err != nil {
 		return fmt.Errorf("parse source config: %w", err)
@@ -134,7 +136,7 @@ func (s *Source) Configure(_ context.Context, raw map[string]string) error {
 }
 
 // Open opens needed connections and prepares to start producing records.
-func (s *Source) Open(ctx context.Context, sdkPosition sdk.Position) error {
+func (s *Source) Open(ctx context.Context, sdkPosition opencdc.Position) error {
 	opts := s.config.GetClientOptions().SetRegistry(newBSONCodecRegistry())
 
 	var err error
@@ -176,29 +178,29 @@ func newBSONCodecRegistry() *bsoncodec.Registry {
 	return registry
 }
 
-// Read returns a new [sdk.Record].
+// Read returns a new [opencdc.Record].
 // It can return the error [sdk.ErrBackoffRetry] to signal to the SDK
 // it should call Read again with a backoff retry.
-func (s *Source) Read(ctx context.Context) (sdk.Record, error) {
+func (s *Source) Read(ctx context.Context) (opencdc.Record, error) {
 	hasNext, err := s.iterator.HasNext(ctx)
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("has next: %w", err)
+		return opencdc.Record{}, fmt.Errorf("has next: %w", err)
 	}
 
 	if !hasNext {
-		return sdk.Record{}, sdk.ErrBackoffRetry
+		return opencdc.Record{}, sdk.ErrBackoffRetry
 	}
 
 	record, err := s.iterator.Next(ctx)
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("get next record: %w", err)
+		return opencdc.Record{}, fmt.Errorf("get next record: %w", err)
 	}
 
 	return record, nil
 }
 
 // Ack just logs a provided position.
-func (s *Source) Ack(ctx context.Context, position sdk.Position) error {
+func (s *Source) Ack(ctx context.Context, position opencdc.Position) error {
 	sdk.Logger(ctx).Debug().Str("position", string(position)).Msg("got ack")
 
 	return nil

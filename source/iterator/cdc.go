@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -68,8 +69,8 @@ type changeStreamEvent struct {
 	} `bson:"ns"`
 }
 
-// toRecord converts the underlying [changeStreamEvent] to an [sdk.Record].
-func (e changeStreamEvent) toRecord() (sdk.Record, error) {
+// toRecord converts the underlying [changeStreamEvent] to an [opencdc.Record].
+func (e changeStreamEvent) toRecord() (opencdc.Record, error) {
 	position := &position{
 		Mode:        modeCDC,
 		ResumeToken: e.ID,
@@ -77,38 +78,38 @@ func (e changeStreamEvent) toRecord() (sdk.Record, error) {
 
 	sdkPosition, err := position.marshalSDKPosition()
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("marshal position into sdk.Position: %w", err)
+		return opencdc.Record{}, fmt.Errorf("marshal position into opencdc.Position: %w", err)
 	}
 
 	// set the record metadata
-	metadata := make(sdk.Metadata)
+	metadata := make(opencdc.Metadata)
 	metadata[metadataFieldCollection] = e.Namespace.Collection
 	metadata.SetCreatedAt(e.WallTime)
 
 	docJSON, err := json.Marshal(e.FullDocument)
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("failed marshalling into JSON: %w", err)
+		return opencdc.Record{}, fmt.Errorf("failed marshalling into JSON: %w", err)
 	}
 	switch e.OperationType {
 	case operationTypeInsert:
 		return sdk.Util.Source.NewRecordCreate(
-			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), sdk.RawData(docJSON),
+			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), opencdc.RawData(docJSON),
 		), nil
 
 	case operationTypeUpdate:
 		return sdk.Util.Source.NewRecordUpdate(
-			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey), nil, sdk.RawData(docJSON),
+			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), nil, opencdc.RawData(docJSON),
 		), nil
 
 	case operationTypeDelete:
-		return sdk.Util.Source.NewRecordDelete(
-			sdkPosition, metadata, sdk.StructuredData(e.DocumentKey),
+		return sdk.SourceUtil{}.NewRecordDelete(
+			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), nil,
 		), nil
 
 	default:
 		// this shouldn't happen as we filter Change Stream events by operation type,
 		// and get only insert, update, and delete
-		return sdk.Record{}, errUnsupportedOperationType
+		return opencdc.Record{}, errUnsupportedOperationType
 	}
 }
 
@@ -138,15 +139,15 @@ func (c *cdc) hasNext(ctx context.Context) (bool, error) {
 }
 
 // next returns the next record.
-func (c *cdc) next(_ context.Context) (sdk.Record, error) {
+func (c *cdc) next(_ context.Context) (opencdc.Record, error) {
 	var event changeStreamEvent
 	if err := c.changeStream.Decode(&event); err != nil {
-		return sdk.Record{}, fmt.Errorf("decode change stream event: %w", err)
+		return opencdc.Record{}, fmt.Errorf("decode change stream event: %w", err)
 	}
 
 	record, err := event.toRecord()
 	if err != nil {
-		return sdk.Record{}, fmt.Errorf("convert event to sdk.Record: %w", err)
+		return opencdc.Record{}, fmt.Errorf("convert event to opencdc.Record: %w", err)
 	}
 
 	return record, nil
