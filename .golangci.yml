@@ -2,7 +2,8 @@ linters-settings:
   gofmt:
     simplify: false
   govet:
-    check-shadowing: true
+    shadow:
+      strict: true
   nolintlint:
     allow-unused: false # report any unused nolint directives
     require-explanation: true # require an explanation for nolint directives
@@ -26,13 +27,13 @@ linters:
   enable:
     - bodyclose
     # - depguard
+    - copyloopvar
     - dogsled
     - durationcheck
     - errcheck
     - errname
     - errorlint
     - exhaustive
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - funlen
@@ -46,7 +47,6 @@ linters:
     - goheader
     - goimports
     - revive
-    - gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
@@ -58,6 +58,7 @@ linters:
     - lll
     - misspell
     - makezero
+    - mnd
     - nakedret
     - nilerr
     - nilnil
