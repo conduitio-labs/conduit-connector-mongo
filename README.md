@@ -93,3 +93,4 @@ If a record contains a `mongo.collection` property in its metadata it will be wr
 The connector uses all keys from an `opencdc.Record` when updating and deleting documents.
 
 If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is.
+![scarf pixel](https://static.scarf.sh/a.png?x-pxid=528a9760-d573-4524-8f65-74a5e4d402e8)
