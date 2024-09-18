@@ -2,12 +2,17 @@
 
 ## General
 
-The [MongoDB](https://www.mongodb.com/) connector is one of Conduit plugins. It provides both, a source and a destination MongoDB connector.
+The [MongoDB](https://www.mongodb.com/) connector is one of Conduit plugins. It
+provides both, a source and a destination MongoDB connector.
 
 ### Prerequisites
 
-- [Go](https://go.dev/) 1.18+
-- [MongoDB](https://www.mongodb.com/) [replica set](https://www.mongodb.com/docs/manual/replication/) (at least single-node) or [sharded cluster](https://www.mongodb.com/docs/manual/sharding/) with [WiredTiger](https://www.mongodb.com/docs/manual/core/wiredtiger/) storage engine
+- [Go](https://go.dev/) 1.23+
+- [MongoDB](https://www.mongodb.com/) [replica set](https://www.mongodb.com/docs/manual/replication/) (
+  at least single-node)
+  or [sharded cluster](https://www.mongodb.com/docs/manual/sharding/)
+  with [WiredTiger](https://www.mongodb.com/docs/manual/core/wiredtiger/)
+  storage engine
 - [Docker](https://www.docker.com/)
 - (optional) [golangci-lint](https://github.com/golangci/golangci-lint) v1.55.2
 
@@ -15,38 +20,63 @@ The [MongoDB](https://www.mongodb.com/) connector is one of Conduit plugins. It 
 
 Run `make build`.
 
-### Testing
+### Development
 
-Run `make test` to run all the unit and integration tests, which require Docker to be installed and running. The command will handle starting and stopping docker container for you.
+Run `make install-tools` to install all the required tools.
+
+Run `make test` to run all the units and `make test-integration` to run all the
+integration tests, which require Docker to be installed and running. The command
+will handle starting and stopping docker container for you.
 
 ## Source
 
-The MongoDB Source Connector connects to a MongoDB with the provided `uri`, `db` and `collection` and starts creating records for each change detected in a collection.
+The MongoDB Source Connector connects to a MongoDB with the provided `uri`, `db`
+and `collection` and starts creating records for each change detected in a
+collection.
 
-Upon starting, the Source takes a snapshot of a given collection in the database, then switches into CDC mode. In CDC mode, the plugin reads events from a [Change Stream](https://www.mongodb.com/docs/manual/changeStreams/). In order for this to work correctly, your MongoDB instance must meet [the criteria](https://www.mongodb.com/docs/manual/changeStreams/#availability) specified on the official website.
+Upon starting, the Source takes a snapshot of a given collection in the
+database, then switches into CDC mode. In CDC mode, the plugin reads events from
+a [Change Stream](https://www.mongodb.com/docs/manual/changeStreams/). In order
+for this to work correctly, your MongoDB instance must
+meet [the criteria](https://www.mongodb.com/docs/manual/changeStreams/#availability)
+specified on the official website.
 
 ### Snapshot Capture
 
-When the connector first starts, snapshot mode is enabled. The connector reads all rows of a collection in batches using a [cursor-based](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/cursor/) pagination,
-limiting the rows by `batchSize`. The connector stores the last processed element value of an `orderingColumn` in a position, so the snapshot process can be paused and resumed without losing data. Once all rows in that initial snapshot are read the connector switches into CDC mode.
+When the connector first starts, snapshot mode is enabled. The connector reads
+all rows of a collection in batches using
+a [cursor-based](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/cursor/)
+pagination,
+limiting the rows by `batchSize`. The connector stores the last processed
+element value of an `orderingColumn` in a position, so the snapshot process can
+be paused and resumed without losing data. Once all rows in that initial
+snapshot are read the connector switches into CDC mode.
 
-This behavior is enabled by default, but can be turned off by adding `"snapshot": false` to the Source configuration.
+This behavior is enabled by default, but can be turned off by adding
+`"snapshot": false` to the Source configuration.
 
 ### Change Data Capture
 
-The connector implements CDC features for MongoDB by using a Change Stream that listens to changes in the configured collection. Every detected change is converted into a record and returned in the call to `Read`. If there is no available record when `Read` is called, the connector returns `sdk.ErrBackoffRetry` error.
+The connector implements CDC features for MongoDB by using a Change Stream that
+listens to changes in the configured collection. Every detected change is
+converted into a record and returned in the call to `Read`. If there is no
+available record when `Read` is called, the connector returns
+`sdk.ErrBackoffRetry` error.
 
-The connector stores a `resumeToken` of every Change Stream event in a position, so the CDC process is resumble.
+The connector stores a `resumeToken` of every Change Stream event in a position,
+so the CDC process is resumble.
 
 > **Warning**
 >
-> [Azure CosmosDB for MongoDB](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/change-streams) has very limited support for Change Streams, so they cannot be used for CDC.
-> If CDC is not possible, like in the case with CosmosDB, the connector only supports detecting insert operations by polling for new documents.
+> [Azure CosmosDB for MongoDB](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/change-streams)
+> has very limited support for Change Streams, so they cannot be used for CDC.
+> If CDC is not possible, like in the case with CosmosDB, the connector only
+> supports detecting insert operations by polling for new documents.
 
 ### Configuration
 
 | name                          | description                                                                                                                         | required | default                                                                                                                                                    |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `uri`                         | The connection string. The URI can contain host names, IPv4/IPv6 literals, or an SRV record.                                        | false    | `mongodb://localhost:27017`                                                                                                                                |
 | `db`                          | The name of a database the connector must work with.                                                                                | **true** |                                                                                                                                                            |
 | `collection`                  | The name of a collection the connector must read from.                                                                              | **true** |                                                                                                                                                            |
@@ -64,20 +94,27 @@ The connector stores a `resumeToken` of every Change Stream event in a position,
 
 The connector always uses the `_id` field as a key.
 
-If the `_id` field is `bson.ObjectID` the connector converts it to a string when transferring a record to a destination, otherwise, it leaves it unchanged.
+If the `_id` field is `bson.ObjectID` the connector converts it to a string when
+transferring a record to a destination, otherwise, it leaves it unchanged.
 
 ## Destination
 
-The MongoDB Destination takes a `opencdc.Record` and parses it into a valid MongoDB query. The Destination is designed to handle different payloads and keys. Because of this, each record is individually parsed and written.
+The MongoDB Destination takes a `opencdc.Record` and parses it into a valid
+MongoDB query. The Destination is designed to handle different payloads and
+keys. Because of this, each record is individually parsed and written.
 
 ### Collection name
 
-If a record contains a `mongo.collection` property in its metadata it will be written in that collection, otherwise it will fall back to use the `collection` configured in the connector. Thus, a Destination can support multiple collections in the same connector, as long as the user has proper access to those collections.
+If a record contains a `mongo.collection` property in its metadata it will be
+written in that collection, otherwise it will fall back to use the `collection`
+configured in the connector. Thus, a Destination can support multiple
+collections in the same connector, as long as the user has proper access to
+those collections.
 
 ### Configuration
 
 | name                          | description                                                                                                                         | required | default                                                                                                                                                    |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `uri`                         | The connection string. The URI can contain host names, IPv4/IPv6 literals, or an SRV record.                                        | false    | `mongodb://localhost:27017`                                                                                                                                |
 | `db`                          | The name of a database the connector must work with.                                                                                | **true** |                                                                                                                                                            |
 | `collection`                  | The name of a collection the connector must write to.                                                                               | **true** |                                                                                                                                                            |
@@ -90,7 +127,9 @@ If a record contains a `mongo.collection` property in its metadata it will be wr
 
 ### Key handling
 
-The connector uses all keys from an `opencdc.Record` when updating and deleting documents.
+The connector uses all keys from an `opencdc.Record` when updating and deleting
+documents.
 
-If the `_id` field can be converted to a `bson.ObjectID`, the connector converts it, otherwise, it uses it as it is.
+If the `_id` field can be converted to a `bson.ObjectID`, the connector converts
+it, otherwise, it uses it as it is.
 ![scarf pixel](https://static.scarf.sh/a.png?x-pxid=528a9760-d573-4524-8f65-74a5e4d402e8)
