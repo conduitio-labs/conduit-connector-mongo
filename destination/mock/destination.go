@@ -21,6 +21,7 @@ import (
 type MockWriter struct {
 	ctrl     *gomock.Controller
 	recorder *MockWriterMockRecorder
+	isgomock struct{}
 }
 
 // MockWriterMockRecorder is the mock recorder for MockWriter.
@@ -41,15 +42,15 @@ func (m *MockWriter) EXPECT() *MockWriterMockRecorder {
 }
 
 // Write mocks base method.
-func (m *MockWriter) Write(arg0 context.Context, arg1 opencdc.Record) error {
+func (m *MockWriter) Write(ctx context.Context, record opencdc.Record) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Write", arg0, arg1)
+	ret := m.ctrl.Call(m, "Write", ctx, record)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Write indicates an expected call of Write.
-func (mr *MockWriterMockRecorder) Write(arg0, arg1 any) *gomock.Call {
+func (mr *MockWriterMockRecorder) Write(ctx, record any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockWriter)(nil).Write), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockWriter)(nil).Write), ctx, record)
 }
