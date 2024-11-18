@@ -6,7 +6,7 @@ require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/conduitio/conduit-commons v0.5.0
 	github.com/conduitio/conduit-connector-sdk v0.12.0
-	github.com/go-playground/validator/v10 v10.22.1
+	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golangci/golangci-lint v1.62.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.17.1
