@@ -39,12 +39,12 @@ const (
 var changeStreamMatchPipeline = bson.D{
 	{
 		Key: "$match", Value: bson.M{
-			"operationType": bson.M{"$in": []string{
-				operationTypeInsert,
-				operationTypeUpdate,
-				operationTypeDelete,
-			}},
-		},
+		"operationType": bson.M{"$in": []string{
+			operationTypeInsert,
+			operationTypeUpdate,
+			operationTypeDelete,
+		}},
+	},
 	},
 }
 
@@ -83,7 +83,7 @@ func (e changeStreamEvent) toRecord() (opencdc.Record, error) {
 
 	// set the record metadata
 	metadata := make(opencdc.Metadata)
-	metadata[metadataFieldCollection] = e.Namespace.Collection
+	metadata.SetCollection(e.Namespace.Collection)
 	metadata.SetCreatedAt(e.WallTime)
 
 	docJSON, err := json.Marshal(e.FullDocument)
