@@ -84,8 +84,8 @@ github.com/conduitio/conduit-commons v0.5.1 h1:o6Lh3LhBuorDfVVlWyj3tYoYbBUUPTMiJ
 github.com/conduitio/conduit-commons v0.5.1/go.mod h1:FmJI9zOxX+HDiqculivPmekaUASZdubOJnI8sOOLAXk=
 github.com/conduitio/conduit-connector-protocol v0.9.1 h1:NhazVIoJOOuX+9xAiL3WZ0r3T6UAMwLkPD8h6lWMND4=
 github.com/conduitio/conduit-connector-protocol v0.9.1/go.mod h1:S3Rar9si3GJUolwtFhO2CL3DpuWmJxzce4W+Psi/8zQ=
-github.com/conduitio/conduit-connector-sdk v0.13.2-0.20250210230907-684fe271ce9e h1:35/SaQi4aS+CxTWzpXRwOcijUek/RYSLDzIBodS5yck=
-github.com/conduitio/conduit-connector-sdk v0.13.2-0.20250210230907-684fe271ce9e/go.mod h1:tFr09281v3JYJhEzR1CEPQNf9Fxy76lk74ogASBHGyE=
+github.com/conduitio/conduit-connector-sdk v0.13.1 h1:Fw5KHm8Y7LdtLibeLW+dYA9IAHx/1GuWx8VLZcBkvg0=
+github.com/conduitio/conduit-connector-sdk v0.13.1/go.mod h1:rduMJDB541+dolgZdCkPPaJk2CHPaTe1FUnV1YvwTl0=
 github.com/conduitio/evolviconf v0.1.0 h1:rcG+hs6tlrYlX9qomOQJz+K+OnDhbMbioGx3ci55yo0=
 github.com/conduitio/evolviconf v0.1.0/go.mod h1:RnbnSqDDYarKgG2p+krP71svG6qLms3+/TnKrPKWk+0=
 github.com/conduitio/evolviconf/evolviyaml v0.1.0 h1:nMW7CROIMtHhscm/QLMpMs7uCPp6O2dS4CfU9bhugd4=
@@ -353,8 +353,8 @@ github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/onsi/ginkgo/v2 v2.22.2 h1:/3X8Panh8/WwhU/3Ssa6rCKqPLuAkVY2I0RoyDLySlU=
 github.com/onsi/ginkgo/v2 v2.22.2/go.mod h1:oeMosUL+8LtarXBHu/c0bx2D/K9zyQ6uX3cTyztHwsk=
-github.com/onsi/gomega v1.36.2 h1:koNYke6TVk6ZmnyHrCXba/T/MoLBXFjeC1PtvYgw0A8=
-github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlRPHzY=
+github.com/onsi/gomega v1.34.2 h1:pNCwDkzrsv7MS9kpaQvVb1aVLahQXyJ/Tv5oAZMI3i8=
+github.com/onsi/gomega v1.34.2/go.mod h1:v1xfxRgk0KIsG+QOdm7p8UosrOzPYRo60fd3B/1Dukc=
 github.com/otiai10/copy v1.2.0/go.mod h1:rrF5dJ5F0t/EWSYODDu4j9/vEeYHMkc8jt0zJChqQWw=
 github.com/otiai10/copy v1.14.0 h1:dCI/t1iTdYGtkvCuBG2BgR6KZa83PTclw4U5n2wAllU=
 github.com/otiai10/copy v1.14.0/go.mod h1:ECfuL02W+/FkTWZWgQqXPWZgW9oeKCSQ5qVfSc4qc4w=
