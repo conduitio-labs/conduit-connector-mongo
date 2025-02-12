@@ -45,14 +45,14 @@ specification:
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.caFile,omitempty
+      - name: auth.auth.tls.caFile
         description: |-
           TLSCAFile is the path to either a single or a bundle of
           certificate authorities to trust when making a TLS connection.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.certificateKeyFile,omitempty
+      - name: auth.auth.tls.certificateKeyFile
         description: |-
           TLSCertificateKeyFile is the path to the client certificate
           file or the client private key file.
@@ -124,7 +124,7 @@ specification:
       - name: sdk.schema.extract.key.enabled
         description: Whether to extract and encode the record key with a schema.
         type: bool
-        default: "true"
+        default: "false"
         validations: []
       - name: sdk.schema.extract.key.subject
         description: |-
@@ -137,7 +137,7 @@ specification:
       - name: sdk.schema.extract.payload.enabled
         description: Whether to extract and encode the record payload with a schema.
         type: bool
-        default: "true"
+        default: "false"
         validations: []
       - name: sdk.schema.extract.payload.subject
         description: |-
@@ -194,14 +194,14 @@ specification:
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.caFile,omitempty
+      - name: auth.auth.tls.caFile
         description: |-
           TLSCAFile is the path to either a single or a bundle of
           certificate authorities to trust when making a TLS connection.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.certificateKeyFile,omitempty
+      - name: auth.auth.tls.certificateKeyFile
         description: |-
           TLSCertificateKeyFile is the path to the client certificate
           file or the client private key file.

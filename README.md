@@ -70,12 +70,12 @@ pipelines:
           # authorities to trust when making a TLS connection.
           # Type: string
           # Required: no
-          auth.auth.tls.caFile,omitempty: ""
+          auth.auth.tls.caFile: ""
           # TLSCertificateKeyFile is the path to the client certificate file or
           # the client private key file.
           # Type: string
           # Required: no
-          auth.auth.tls.certificateKeyFile,omitempty: ""
+          auth.auth.tls.certificateKeyFile: ""
           # Username is the username.
           # Type: string
           # Required: no
@@ -122,7 +122,7 @@ pipelines:
           # Whether to extract and encode the record key with a schema.
           # Type: bool
           # Required: no
-          sdk.schema.extract.key.enabled: "true"
+          sdk.schema.extract.key.enabled: "false"
           # The subject of the key schema. If the record metadata contains the
           # field "opencdc.collection" it is prepended to the subject name and
           # separated with a dot.
@@ -132,7 +132,7 @@ pipelines:
           # Whether to extract and encode the record payload with a schema.
           # Type: bool
           # Required: no
-          sdk.schema.extract.payload.enabled: "true"
+          sdk.schema.extract.payload.enabled: "false"
           # The subject of the payload schema. If the record metadata contains
           # the field "opencdc.collection" it is prepended to the subject name
           # and separated with a dot.
@@ -188,12 +188,12 @@ pipelines:
           # authorities to trust when making a TLS connection.
           # Type: string
           # Required: no
-          auth.auth.tls.caFile,omitempty: ""
+          auth.auth.tls.caFile: ""
           # TLSCertificateKeyFile is the path to the client certificate file or
           # the client private key file.
           # Type: string
           # Required: no
-          auth.auth.tls.certificateKeyFile,omitempty: ""
+          auth.auth.tls.certificateKeyFile: ""
           # Username is the username.
           # Type: string
           # Required: no

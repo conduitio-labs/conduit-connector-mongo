@@ -25,6 +25,7 @@ import (
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/common"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
+	"github.com/conduitio/conduit-commons/lang"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
@@ -55,7 +56,16 @@ func (s *Source) Config() sdk.SourceConfig {
 // NewSource creates a new instance of the [Source].
 func NewSource() sdk.Source {
 	return sdk.SourceWithMiddleware(
-		&Source{},
+		&Source{
+			config: Config{
+				DefaultSourceMiddleware: sdk.DefaultSourceMiddleware{
+					SourceWithSchemaExtraction: sdk.SourceWithSchemaExtraction{
+						PayloadEnabled: lang.Ptr(false),
+						KeyEnabled:     lang.Ptr(false),
+					},
+				},
+			},
+		},
 	)
 }
 

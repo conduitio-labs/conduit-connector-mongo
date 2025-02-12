@@ -27,7 +27,7 @@ type Config struct {
 	config.Config
 }
 
-func (c Config) Validate(ctx context.Context) error {
+func (c *Config) Validate(ctx context.Context) error {
 	var errs []error
 	if err := c.Config.Validate(ctx); err != nil {
 		errs = append(errs, err)
