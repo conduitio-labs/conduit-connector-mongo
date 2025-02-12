@@ -2,7 +2,7 @@ version: "1.0"
 specification:
   name: mongo
   summary: The MongoDB source and destination plugin for Conduit, written in Go.
-  description: ""
+  description: "## Source\n\nThe MongoDB Source Connector connects to a MongoDB with the provided `uri`, `db`\nand `collection` and starts creating records for each change detected in a\ncollection.\n\nUpon starting, the Source takes a snapshot of a given collection in the\ndatabase, then switches into CDC mode. In CDC mode, the plugin reads events from\na [Change Stream](https://www.mongodb.com/docs/manual/changeStreams/). In order\nfor this to work correctly, your MongoDB instance must\nmeet [the criteria](https://www.mongodb.com/docs/manual/changeStreams/#availability)\nspecified on the official website.\n\n### Snapshot Capture\n\nWhen the connector first starts, snapshot mode is enabled. The connector reads\nall rows of a collection in batches using\na [cursor-based](https://www.mongodb.com/docs/drivers/go/current/fundamentals/crud/read-operations/cursor/)\npagination,\nlimiting the rows by `batchSize`. The connector stores the last processed\nelement value of an `orderingColumn` in a position, so the snapshot process can\nbe paused and resumed without losing data. Once all rows in that initial\nsnapshot are read the connector switches into CDC mode.\n\nThis behavior is enabled by default, but can be turned off by adding\n`\"snapshot\": false` to the Source configuration.\n\n### Change Data Capture\n\nThe connector implements CDC features for MongoDB by using a Change Stream that\nlistens to changes in the configured collection. Every detected change is\nconverted into a record and returned in the call to `Read`. If there is no\navailable record when `Read` is called, the connector returns\n`sdk.ErrBackoffRetry` error.\n\nThe connector stores a `resumeToken` of every Change Stream event in a position,\nso the CDC process is resumble.\n\n> **Warning**\n>\n> [Azure CosmosDB for MongoDB](https://learn.microsoft.com/en-us/azure/cosmos-db/mongodb/change-streams)\n> has very limited support for Change Streams, so they cannot be used for CDC.\n> If CDC is not possible, like in the case with CosmosDB, the connector only\n> supports detecting insert operations by polling for new documents.\n\n### Key handling\n\nThe connector always uses the `_id` field as a key.\n\nIf the `_id` field is `bson.ObjectID` the connector converts it to a string when\ntransferring a record to a destination, otherwise, it leaves it unchanged.\n\n## Destination\n\nThe MongoDB Destination takes a `opencdc.Record` and parses it into a valid\nMongoDB query. The Destination is designed to handle different payloads and\nkeys. Because of this, each record is individually parsed and written.\n\n### Collection name\n  \nIf a record contains an `opencdc.collection` property in its metadata it will be\nwritten in that collection, otherwise it will fall back to use the `collection`\nconfigured in the connector. Thus, a Destination can support multiple\ncollections in the same connector, as long as the user has proper access to\nthose collections.\n\n### Key handling\n\nThe connector uses all keys from an `opencdc.Record` when updating and deleting\ndocuments.\n\nIf the `_id` field can be converted to a `bson.ObjectID`, the connector converts\nit, otherwise, it uses it as it is."
   version: (devel)
   author: Meroxa, Inc.
   source:
@@ -86,56 +86,6 @@ specification:
           of the entire collection before starting CDC mode.
         type: bool
         default: "true"
-        validations: []
-      - name: urI.forceQuery
-        description: append a query ('?') even if RawQuery is empty
-        type: bool
-        default: ""
-        validations: []
-      - name: urI.fragment
-        description: fragment for references, without '#'
-        type: string
-        default: ""
-        validations: []
-      - name: urI.host
-        description: host or host:port (see Hostname and Port methods)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.omitHost
-        description: do not emit empty host (authority)
-        type: bool
-        default: ""
-        validations: []
-      - name: urI.opaque
-        description: encoded opaque data
-        type: string
-        default: ""
-        validations: []
-      - name: urI.path
-        description: path (relative paths may omit leading slash)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawFragment
-        description: encoded fragment hint (see EscapedFragment method)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawPath
-        description: encoded path hint (see EscapedPath method)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawQuery
-        description: encoded query values, without '?'
-        type: string
-        default: ""
-        validations: []
-      - name: urI.scheme
-        description: ""
-        type: string
-        default: ""
         validations: []
       - name: uri
         description: |-
@@ -260,56 +210,6 @@ specification:
         validations: []
       - name: auth.auth.username
         description: Username is the username.
-        type: string
-        default: ""
-        validations: []
-      - name: urI.forceQuery
-        description: append a query ('?') even if RawQuery is empty
-        type: bool
-        default: ""
-        validations: []
-      - name: urI.fragment
-        description: fragment for references, without '#'
-        type: string
-        default: ""
-        validations: []
-      - name: urI.host
-        description: host or host:port (see Hostname and Port methods)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.omitHost
-        description: do not emit empty host (authority)
-        type: bool
-        default: ""
-        validations: []
-      - name: urI.opaque
-        description: encoded opaque data
-        type: string
-        default: ""
-        validations: []
-      - name: urI.path
-        description: path (relative paths may omit leading slash)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawFragment
-        description: encoded fragment hint (see EscapedFragment method)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawPath
-        description: encoded path hint (see EscapedPath method)
-        type: string
-        default: ""
-        validations: []
-      - name: urI.rawQuery
-        description: encoded query values, without '?'
-        type: string
-        default: ""
-        validations: []
-      - name: urI.scheme
-        description: ""
         type: string
         default: ""
         validations: []
