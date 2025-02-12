@@ -15,11 +15,11 @@
 package source
 
 import (
-	"fmt"
-	"strconv"
+	"context"
+	"errors"
 
 	"github.com/conduitio-labs/conduit-connector-mongo/config"
-	"github.com/conduitio-labs/conduit-connector-mongo/validator"
+	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
 const (
@@ -42,60 +42,27 @@ const (
 
 // Config contains source-specific configurable values.
 type Config struct {
+	sdk.DefaultSourceMiddleware
 	config.Config
 
 	// BatchSize is the size of a document batch.
-	BatchSize int `key:"batchSize" validate:"gte=1,lte=100000"`
-	// Snapshot determines whether or not the connector will take a snapshot
+	BatchSize int `json:"batchSize" default:"1000" validate:"gt=0,lt=100000"`
+	// Snapshot determines whether the connector will take a snapshot
 	// of the entire collection before starting CDC mode.
-	Snapshot bool `key:"snapshot"`
+	Snapshot bool `json:"snapshot" default:"true"`
 	// OrderingField is the name of a field that is used for ordering
 	// collection documents when capturing a snapshot.
-	OrderingField string `key:"orderingField"`
+	OrderingField string `json:"orderingField" default:"_id"`
 }
 
-// ParseConfig maps the incoming map to the [Config] and validates it.
-func ParseConfig(raw map[string]string) (Config, error) {
-	commonConfig, err := config.Parse(raw)
-	if err != nil {
-		return Config{}, fmt.Errorf("parse common config: %w", err)
+func (c Config) Validate(ctx context.Context) error {
+	var errs []error
+	if err := c.Config.Validate(ctx); err != nil {
+		errs = append(errs, err)
+	}
+	if err := c.DefaultSourceMiddleware.Validate(ctx); err != nil {
+		errs = append(errs, err)
 	}
 
-	sourceConfig := Config{
-		Config:        commonConfig,
-		BatchSize:     defaultBatchSize,
-		Snapshot:      defaultSnapshot,
-		OrderingField: defaultOrderingField,
-	}
-
-	// parse batch size if it's not empty
-	if batchSizeStr := raw[ConfigKeyBatchSize]; batchSizeStr != "" {
-		batchSize, err := strconv.Atoi(batchSizeStr)
-		if err != nil {
-			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeyBatchSize, err)
-		}
-
-		sourceConfig.BatchSize = batchSize
-	}
-
-	// parse snapshot if it's not empty
-	if snapshotStr := raw[ConfigKeySnapshot]; snapshotStr != "" {
-		snapshot, err := strconv.ParseBool(snapshotStr)
-		if err != nil {
-			return Config{}, fmt.Errorf("parse %q: %w", ConfigKeySnapshot, err)
-		}
-
-		sourceConfig.Snapshot = snapshot
-	}
-
-	// set the orderingField if it's not empty
-	if orderingField := raw[ConfigKeyOrderingField]; orderingField != "" {
-		sourceConfig.OrderingField = orderingField
-	}
-
-	if err := validator.ValidateStruct(&sourceConfig); err != nil {
-		return Config{}, fmt.Errorf("validate source config: %w", err)
-	}
-
-	return sourceConfig, nil
+	return errors.Join(errs...)
 }

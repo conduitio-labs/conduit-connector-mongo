@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
@@ -74,8 +73,8 @@ func TestAcceptance(t *testing.T) {
 	}
 
 	cfg := map[string]string{
-		config.KeyURI: uri,
-		config.KeyDB:  testDB,
+		"uri": uri,
+		"db":  testDB,
 	}
 
 	sdk.AcceptanceTest(t, driver{
@@ -99,18 +98,18 @@ func beforeTest(cfg map[string]string) func(*testing.T) {
 		is := is.New(t)
 
 		// create a test mongo client
-		mongoClient, err := createTestMongoClient(context.Background(), cfg[config.KeyURI])
+		mongoClient, err := createTestMongoClient(context.Background(), cfg["uri"])
 		is.NoErr(err)
 		defer func() {
 			err = mongoClient.Disconnect(context.Background())
 			is.NoErr(err)
 		}()
 
-		cfg[config.KeyCollection] = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
+		cfg["collection"] = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
 
 		// connect to the test database and create a collection
-		testDatabase := mongoClient.Database(cfg[config.KeyDB])
-		is.NoErr(testDatabase.CreateCollection(context.Background(), cfg[config.KeyCollection]))
+		testDatabase := mongoClient.Database(cfg["db"])
+		is.NoErr(testDatabase.CreateCollection(context.Background(), cfg["collection"]))
 	}
 }
 
@@ -122,7 +121,7 @@ func afterTest(cfg map[string]string) func(*testing.T) {
 		is := is.New(t)
 
 		// create a test mongo client
-		mongoClient, err := createTestMongoClient(context.Background(), cfg[config.KeyURI])
+		mongoClient, err := createTestMongoClient(context.Background(), cfg["uri"])
 		is.NoErr(err)
 		defer func() {
 			err = mongoClient.Disconnect(context.Background())
@@ -130,8 +129,8 @@ func afterTest(cfg map[string]string) func(*testing.T) {
 		}()
 
 		// connect to the test database and collection
-		testDatabase := mongoClient.Database(cfg[config.KeyDB])
-		testCollection := testDatabase.Collection(cfg[config.KeyCollection])
+		testDatabase := mongoClient.Database(cfg["db"])
+		testCollection := testDatabase.Collection(cfg["collection"])
 
 		// drop the test collection
 		err = testCollection.Drop(context.Background())

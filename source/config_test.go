@@ -40,7 +40,7 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI: &url.URL{
+					uri: &url.URL{
 						Scheme: "mongodb",
 						Host:   "localhost:27017",
 					},
@@ -63,7 +63,7 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI: &url.URL{
+					uri: &url.URL{
 						Scheme: "mongodb",
 						Host:   "localhost:27017",
 					},
@@ -86,7 +86,7 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI: &url.URL{
+					uri: &url.URL{
 						Scheme: "mongodb",
 						Host:   "localhost:27017",
 					},
@@ -109,7 +109,7 @@ func TestParseConfig(t *testing.T) {
 			},
 			want: Config{
 				Config: config.Config{
-					URI: &url.URL{
+					uri: &url.URL{
 						Scheme: "mongodb",
 						Host:   "localhost:27017",
 					},

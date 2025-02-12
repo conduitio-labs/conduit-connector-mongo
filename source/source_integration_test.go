@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
@@ -42,37 +41,34 @@ const (
 func TestSource_Open_failDatabaseNotExist(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	err = source.Open(ctx, nil)
+	err := source.Open(ctx, nil)
 	is.True(err != nil)
-	is.Equal(err.Error(), fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, sourceConfig[config.KeyDB]))
+	is.Equal(
+		err.Error(),
+		fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, cfg.DB),
+	)
 }
 
 func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -80,9 +76,9 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	})
 
 	// connect to a test database (this will create it automatically)
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	testDatabase := mongoClient.Database(cfg.DB)
 	// create a test collection with a wrong name
-	wrongName := sourceConfig[config.KeyCollection] + "s"
+	wrongName := cfg.Collection + "s"
 	is.NoErr(testDatabase.CreateCollection(ctx, wrongName))
 	testCollection := testDatabase.Collection(wrongName)
 	// drop the created test collection after the test
@@ -94,25 +90,22 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	err = source.Open(ctx, nil)
 	is.True(err != nil)
 	is.Equal(err.Error(), fmt.Sprintf(
-		`get mongo collection: collection "%s" doesn't exist`, sourceConfig[config.KeyCollection]),
+		`get mongo collection: collection "%s" doesn't exist`, cfg.Collection),
 	)
 }
 
 func TestSource_Read_successSnapshot(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -120,9 +113,9 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -145,18 +138,15 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 func TestSource_Read_continueSnapshot(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -164,9 +154,9 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -212,18 +202,15 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 func TestSource_Read_successCDC(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -231,9 +218,9 @@ func TestSource_Read_successCDC(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -280,18 +267,15 @@ func TestSource_Read_successCDC(t *testing.T) {
 func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -299,9 +283,9 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -357,18 +341,15 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 func TestSource_Read_continueCDC(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
 	source := NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	cfg := source.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -376,9 +357,9 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -468,7 +449,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 }
 
 // prepareConfig prepares a config with the required fields.
-func prepareConfig(t *testing.T) map[string]string {
+func prepareConfig(t *testing.T, cfg *Config) {
 	t.Helper()
 
 	uri := os.Getenv(testEnvNameURI)
@@ -476,11 +457,9 @@ func prepareConfig(t *testing.T) map[string]string {
 		t.Skipf("%s env var must be set", testEnvNameURI)
 	}
 
-	return map[string]string{
-		config.KeyURI:        uri,
-		config.KeyDB:         testDB,
-		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
-	}
+	cfg.URIStr = uri
+	cfg.DB = testDB
+	cfg.Collection = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
 }
 
 // createTestMongoClient connects to a MongoDB by a provided URI.

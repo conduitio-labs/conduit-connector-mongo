@@ -1,4 +1,4 @@
-// Copyright © 2023 Meroxa, Inc. & Yalantis
+// Copyright © 2025 Meroxa, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate conn-sdk-cli specgen
-
-// Package mongo implements MongoDB connector for Conduit.
-// It provides both, a source and a destination MongoDB connector.
-package mongo
+package destination
 
 import (
-	_ "embed"
+	"context"
+	"errors"
 
-	"github.com/conduitio-labs/conduit-connector-mongo/destination"
-	"github.com/conduitio-labs/conduit-connector-mongo/source"
+	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-//go:embed connector.yaml
-var specs string
+type Config struct {
+	sdk.DefaultDestinationMiddleware
+	config.Config
+}
 
-var version = "(devel)"
+func (c Config) Validate(ctx context.Context) error {
+	var errs []error
+	if err := c.Config.Validate(ctx); err != nil {
+		errs = append(errs, err)
+	}
+	if err := c.DefaultDestinationMiddleware.Validate(ctx); err != nil {
+		errs = append(errs, err)
+	}
 
-var Connector = sdk.Connector{
-	NewSpecification: sdk.YAMLSpecification(specs, version),
-	NewSource:        source.NewSource,
-	NewDestination:   destination.NewDestination,
+	return errors.Join(errs...)
 }

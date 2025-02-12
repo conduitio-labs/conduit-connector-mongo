@@ -44,7 +44,7 @@ func TestSource_Configure_success(t *testing.T) {
 
 	want := Config{
 		Config: config.Config{
-			URI: &url.URL{
+			uri: &url.URL{
 				Scheme: "mongodb",
 				Host:   "localhost:27017",
 			},

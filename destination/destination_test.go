@@ -42,7 +42,7 @@ func TestDestination_Configure_success(t *testing.T) {
 	is.NoErr(err)
 
 	is.Equal(d.config, config.Config{
-		URI: &url.URL{
+		uri: &url.URL{
 			Scheme: "mongodb",
 			Host:   "localhost:27017",
 		},
