@@ -46,6 +46,7 @@ func TestSource_Open_failDatabaseNotExist(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 

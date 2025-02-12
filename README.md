@@ -102,34 +102,34 @@ pipelines:
           # AWSSessionToken is an AWS session token.
           # Type: string
           # Required: no
-          auth.auth.awsSessionToken: ""
+          auth.awsSessionToken: ""
           # DB is the name of a database that contains the user's authentication
           # data.
           # Type: string
           # Required: no
-          auth.auth.db: ""
+          auth.db: ""
           # Mechanism is the authentication mechanism.
           # Type: string
           # Required: no
-          auth.auth.mechanism: ""
+          auth.mechanism: ""
           # Password is the user's password.
           # Type: string
           # Required: no
-          auth.auth.password: ""
+          auth.password: ""
           # TLSCAFile is the path to either a single or a bundle of certificate
           # authorities to trust when making a TLS connection.
           # Type: string
           # Required: no
-          auth.auth.tls.caFile: ""
+          auth.tls.caFile: ""
           # TLSCertificateKeyFile is the path to the client certificate file or
           # the client private key file.
           # Type: string
           # Required: no
-          auth.auth.tls.certificateKeyFile: ""
+          auth.tls.certificateKeyFile: ""
           # Username is the username.
           # Type: string
           # Required: no
-          auth.auth.username: ""
+          auth.username: ""
           # BatchSize is the size of a document batch.
           # Type: int
           # Required: no
@@ -220,34 +220,34 @@ pipelines:
           # AWSSessionToken is an AWS session token.
           # Type: string
           # Required: no
-          auth.auth.awsSessionToken: ""
+          auth.awsSessionToken: ""
           # DB is the name of a database that contains the user's authentication
           # data.
           # Type: string
           # Required: no
-          auth.auth.db: ""
+          auth.db: ""
           # Mechanism is the authentication mechanism.
           # Type: string
           # Required: no
-          auth.auth.mechanism: ""
+          auth.mechanism: ""
           # Password is the user's password.
           # Type: string
           # Required: no
-          auth.auth.password: ""
+          auth.password: ""
           # TLSCAFile is the path to either a single or a bundle of certificate
           # authorities to trust when making a TLS connection.
           # Type: string
           # Required: no
-          auth.auth.tls.caFile: ""
+          auth.tls.caFile: ""
           # TLSCertificateKeyFile is the path to the client certificate file or
           # the client private key file.
           # Type: string
           # Required: no
-          auth.auth.tls.certificateKeyFile: ""
+          auth.tls.certificateKeyFile: ""
           # Username is the username.
           # Type: string
           # Required: no
-          auth.auth.username: ""
+          auth.username: ""
           # URI is the connection string. The URI can contain host names,
           # IPv4/IPv6 literals, or an SRV record.
           # Type: string

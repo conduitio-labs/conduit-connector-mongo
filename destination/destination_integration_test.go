@@ -52,6 +52,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := destination.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -94,6 +95,7 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := destination.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -136,6 +138,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := destination.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -187,6 +190,7 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := destination.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -234,6 +238,7 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := destination.Config().(*Config)
 	prepareConfig(t, cfg)
 

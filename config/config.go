@@ -28,9 +28,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// defaultConnectionURI is a default MongoDB connection URI string.
-var defaultConnectionURI = &url.URL{Scheme: "mongodb", Host: "localhost:27017"}
-
 const (
 	// defaultServerSelectionTimeout is a default value for the ServerSelectionTimeout option.
 	defaultServerSelectionTimeout = time.Second * 5
@@ -80,31 +77,31 @@ type Config struct {
 	// write to (destination) or read from (source).
 	Collection string `json:"collection" validate:"required"`
 
-	Auth AuthConfig
+	Auth AuthConfig `json:"auth"`
 }
 
 // AuthConfig contains authentication-specific configurable values.
 type AuthConfig struct {
 	// Username is the username.
-	Username string `json:"auth.username"`
+	Username string `json:"username"`
 	// Password is the user's password.
-	Password string `json:"auth.password"`
+	Password string `json:"password"`
 	// DB is the name of a database that contains
 	// the user's authentication data.
-	DB string `json:"auth.db"`
+	DB string `json:"db"`
 	// Mechanism is the authentication mechanism.
-	Mechanism AuthMechanism `json:"auth.mechanism"`
+	Mechanism AuthMechanism `json:"mechanism"`
 	// TLSCAFile is the path to either a single or a bundle of
 	// certificate authorities to trust when making a TLS connection.
-	TLSCAFile string `json:"auth.tls.caFile"`
+	TLSCAFile string `json:"tls.caFile"`
 	// TLSCertificateKeyFile is the path to the client certificate
 	// file or the client private key file.
-	TLSCertificateKeyFile string `json:"auth.tls.certificateKeyFile"`
+	TLSCertificateKeyFile string `json:"tls.certificateKeyFile"`
 	// AWSSessionToken is an AWS session token.
-	AWSSessionToken string `json:"auth.awsSessionToken"`
+	AWSSessionToken string `json:"awsSessionToken"`
 }
 
-func (c *Config) Validate(ctx context.Context) error {
+func (c *Config) Validate(context.Context) error {
 	var errs []error
 	uri, err := url.Parse(c.URIStr)
 	if err != nil {

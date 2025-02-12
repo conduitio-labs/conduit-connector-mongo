@@ -22,24 +22,6 @@ import (
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-const (
-	// defaultBatchSize is the default value for the batchSize field.
-	defaultBatchSize = 1000
-	// defaultSnapshot is the default value for the snapshot field.
-	defaultSnapshot = true
-	// defaultOrderingField is the default value for the orderingField field.
-	defaultOrderingField = "_id"
-)
-
-const (
-	// ConfigKeyBatchSize is a config name for a batch size.
-	ConfigKeyBatchSize = "batchSize"
-	// ConfigKeySnapshot is a config name for a snapshot field.
-	ConfigKeySnapshot = "snapshot"
-	// ConfigKeyOrderingField is a config name for a orderingField field.
-	ConfigKeyOrderingField = "orderingField"
-)
-
 // Config contains source-specific configurable values.
 type Config struct {
 	sdk.DefaultSourceMiddleware

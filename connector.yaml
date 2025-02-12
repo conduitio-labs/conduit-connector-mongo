@@ -96,43 +96,43 @@ specification:
         validations:
           - type: required
             value: ""
-      - name: auth.auth.awsSessionToken
+      - name: auth.awsSessionToken
         description: AWSSessionToken is an AWS session token.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.db
+      - name: auth.db
         description: |-
           DB is the name of a database that contains
           the user's authentication data.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.mechanism
+      - name: auth.mechanism
         description: Mechanism is the authentication mechanism.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.password
+      - name: auth.password
         description: Password is the user's password.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.caFile
+      - name: auth.tls.caFile
         description: |-
           TLSCAFile is the path to either a single or a bundle of
           certificate authorities to trust when making a TLS connection.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.certificateKeyFile
+      - name: auth.tls.certificateKeyFile
         description: |-
           TLSCertificateKeyFile is the path to the client certificate
           file or the client private key file.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.username
+      - name: auth.username
         description: Username is the username.
         type: string
         default: ""
@@ -171,7 +171,9 @@ specification:
         description: Maximum delay before an incomplete batch is read from the source.
         type: duration
         default: "0"
-        validations: []
+        validations:
+          - type: greater-than
+            value: "-1"
       - name: sdk.batch.size
         description: Maximum size of batch before it gets read from the source.
         type: int
@@ -245,43 +247,43 @@ specification:
         validations:
           - type: required
             value: ""
-      - name: auth.auth.awsSessionToken
+      - name: auth.awsSessionToken
         description: AWSSessionToken is an AWS session token.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.db
+      - name: auth.db
         description: |-
           DB is the name of a database that contains
           the user's authentication data.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.mechanism
+      - name: auth.mechanism
         description: Mechanism is the authentication mechanism.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.password
+      - name: auth.password
         description: Password is the user's password.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.caFile
+      - name: auth.tls.caFile
         description: |-
           TLSCAFile is the path to either a single or a bundle of
           certificate authorities to trust when making a TLS connection.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.tls.certificateKeyFile
+      - name: auth.tls.certificateKeyFile
         description: |-
           TLSCertificateKeyFile is the path to the client certificate
           file or the client private key file.
         type: string
         default: ""
         validations: []
-      - name: auth.auth.username
+      - name: auth.username
         description: Username is the username.
         type: string
         default: ""
