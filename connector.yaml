@@ -2,7 +2,7 @@ version: "1.0"
 specification:
   name: mongo
   summary: The MongoDB source and destination plugin for Conduit, written in Go.
-  description: |
+  description: |-
     ## Source
 
     The MongoDB Source Connector connects to a MongoDB with the provided `uri`, `db`
