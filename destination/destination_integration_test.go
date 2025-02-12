@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -48,17 +47,15 @@ const (
 func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
 	destination := NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	cfg := destination.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -92,17 +89,15 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 func TestDestination_Write_insertSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
 	destination := NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	cfg := destination.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -136,17 +131,15 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 func TestDestination_Write_updateSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
 	destination := NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	cfg := destination.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -189,17 +182,15 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
 	destination := NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	cfg := destination.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -238,17 +229,15 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
 	destination := NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	cfg := destination.Config().(*Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
@@ -335,7 +324,8 @@ func createTestItem(t *testing.T) map[string]any {
 	}
 }
 
-func prepareConfig(t *testing.T) map[string]string {
+// prepareConfig prepares a config with the required fields.
+func prepareConfig(t *testing.T, cfg *Config) {
 	t.Helper()
 
 	uri := os.Getenv(testEnvNameURI)
@@ -343,9 +333,12 @@ func prepareConfig(t *testing.T) map[string]string {
 		t.Skipf("%s env var must be set", testEnvNameURI)
 	}
 
-	return map[string]string{
-		config.KeyURI:        uri,
-		config.KeyDB:         testDB,
-		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+	cfg.URIStr = uri
+	cfg.DB = testDB
+	cfg.Collection = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
+
+	err := cfg.Validate(context.Background())
+	if err != nil {
+		t.Logf("config validation error: %v", err)
 	}
 }

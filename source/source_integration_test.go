@@ -460,6 +460,11 @@ func prepareConfig(t *testing.T, cfg *Config) {
 	cfg.URIStr = uri
 	cfg.DB = testDB
 	cfg.Collection = fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano())
+
+	err := cfg.Validate(context.Background())
+	if err != nil {
+		t.Logf("config validation error: %v", err)
+	}
 }
 
 // createTestMongoClient connects to a MongoDB by a provided URI.
