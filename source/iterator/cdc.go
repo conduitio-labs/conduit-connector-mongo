@@ -39,12 +39,12 @@ const (
 var changeStreamMatchPipeline = bson.D{
 	{
 		Key: "$match", Value: bson.M{
-		"operationType": bson.M{"$in": []string{
-			operationTypeInsert,
-			operationTypeUpdate,
-			operationTypeDelete,
-		}},
-	},
+			"operationType": bson.M{"$in": []string{
+				operationTypeInsert,
+				operationTypeUpdate,
+				operationTypeDelete,
+			}},
+		},
 	},
 }
 
