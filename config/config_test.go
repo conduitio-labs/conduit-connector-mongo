@@ -116,8 +116,8 @@ func TestParse(t *testing.T) {
 				Collection: "users",
 				Auth: AuthConfig{
 					Mechanism:             AuthMechanism("SCRAM-SHA-256"),
-					TLSCAFile:             "go",
-					TLSCertificateKeyFile: "go",
+					TLSCAFile:             "config.go",
+					TLSCertificateKeyFile: "config.go",
 				},
 			},
 			wantErr: false,

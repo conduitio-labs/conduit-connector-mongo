@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -123,6 +124,7 @@ func (c *Config) Validate(ctx context.Context) error {
 	}
 
 	// validate auth mechanism if it's not empty
+	c.Auth.Mechanism = AuthMechanism(strings.ToUpper(string(c.Auth.Mechanism)))
 	if c.Auth.Mechanism != "" && !c.Auth.Mechanism.IsValid() {
 		errs = append(errs, fmt.Errorf("invalid auth mechanism %q", c.Auth.Mechanism))
 	}
