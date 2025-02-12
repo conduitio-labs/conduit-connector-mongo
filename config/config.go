@@ -93,9 +93,11 @@ type AuthConfig struct {
 	Mechanism AuthMechanism `json:"mechanism"`
 	// TLSCAFile is the path to either a single or a bundle of
 	// certificate authorities to trust when making a TLS connection.
+	//nolint:tagliatelle // we prefer our convention with dots as separators
 	TLSCAFile string `json:"tls.caFile"`
 	// TLSCertificateKeyFile is the path to the client certificate
 	// file or the client private key file.
+	//nolint:tagliatelle // we prefer our convention with dots as separators
 	TLSCertificateKeyFile string `json:"tls.certificateKeyFile"`
 	// AWSSessionToken is an AWS session token.
 	AWSSessionToken string `json:"awsSessionToken"`

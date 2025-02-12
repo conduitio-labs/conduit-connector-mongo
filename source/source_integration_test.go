@@ -66,6 +66,7 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -103,6 +104,7 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -144,6 +146,7 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -208,6 +211,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -273,6 +277,7 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
@@ -347,6 +352,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	//nolint:forcetypeassert // we know it's *Config
 	cfg := source.Config().(*Config)
 	prepareConfig(t, cfg)
 
