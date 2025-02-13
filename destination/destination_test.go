@@ -17,70 +17,13 @@ package destination
 import (
 	"context"
 	"errors"
-	"net/url"
 	"testing"
 
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/mock"
 	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/matryer/is"
 	"go.uber.org/mock/gomock"
 )
-
-func TestDestination_Configure_success(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	d := Destination{}
-	err := d.Configure(context.Background(), map[string]string{
-		config.KeyURI:        "mongodb://localhost:27017",
-		config.KeyDB:         "test",
-		config.KeyCollection: "users",
-	})
-
-	is.NoErr(err)
-
-	is.Equal(d.config, config.Config{
-		URI: &url.URL{
-			Scheme: "mongodb",
-			Host:   "localhost:27017",
-		},
-		DB:         "test",
-		Collection: "users",
-	})
-}
-
-func TestDestination_Configure_mechanismFailure(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	d := Destination{}
-	err := d.Configure(context.Background(), map[string]string{
-		config.KeyURI:           "mongodb://localhost:27017",
-		config.KeyDB:            "test",
-		config.KeyCollection:    "users",
-		config.KeyAuthMechanism: "not existing mechanism",
-	})
-
-	is.Equal(err.Error(), "parse config: invalid auth mechanism \"NOT EXISTING MECHANISM\"")
-}
-
-func TestDestination_Configure_structValidateFailure(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	d := Destination{}
-	err := d.Configure(context.Background(), map[string]string{
-		config.KeyURI:        "mong\\'odb://localhost:27017",
-		config.KeyDB:         "test",
-		config.KeyCollection: "users",
-	})
-
-	is.True(err != nil)
-}
 
 func TestDestination_Write_success(t *testing.T) {
 	t.Parallel()

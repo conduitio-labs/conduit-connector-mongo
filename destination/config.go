@@ -1,4 +1,4 @@
-// Copyright © 2023 Meroxa, Inc. & Yalantis
+// Copyright © 2025 Meroxa, Inc. & Yalantis
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package source
+package destination
 
 import (
 	"context"
@@ -22,19 +22,9 @@ import (
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
-// Config contains source-specific configurable values.
 type Config struct {
-	sdk.DefaultSourceMiddleware
+	sdk.DefaultDestinationMiddleware
 	config.Config
-
-	// BatchSize is the size of a document batch.
-	BatchSize int `json:"batchSize" default:"1000" validate:"gt=0,lt=100000"`
-	// Snapshot determines whether the connector will take a snapshot
-	// of the entire collection before starting CDC mode.
-	Snapshot bool `json:"snapshot" default:"true"`
-	// OrderingField is the name of a field that is used for ordering
-	// collection documents when capturing a snapshot.
-	OrderingField string `json:"orderingField" default:"_id"`
 }
 
 func (c *Config) Validate(ctx context.Context) error {
@@ -42,7 +32,7 @@ func (c *Config) Validate(ctx context.Context) error {
 	if err := c.Config.Validate(ctx); err != nil {
 		errs = append(errs, err)
 	}
-	if err := c.DefaultSourceMiddleware.Validate(ctx); err != nil {
+	if err := c.DefaultDestinationMiddleware.Validate(ctx); err != nil {
 		errs = append(errs, err)
 	}
 

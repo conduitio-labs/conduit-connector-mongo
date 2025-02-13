@@ -24,9 +24,7 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/common"
-	mconfig "github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/iterator"
-	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/lang"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -51,99 +49,29 @@ type Source struct {
 	iterator Iterator
 }
 
+func (s *Source) Config() sdk.SourceConfig {
+	return &s.config
+}
+
 // NewSource creates a new instance of the [Source].
 func NewSource() sdk.Source {
 	return sdk.SourceWithMiddleware(
-		&Source{},
-		sdk.DefaultSourceMiddleware(
-			// disable schema extraction by default, because the source produces raw data
-			sdk.SourceWithSchemaExtractionConfig{
-				PayloadEnabled: lang.Ptr(false),
-				KeyEnabled:     lang.Ptr(false),
+		&Source{
+			config: Config{
+				DefaultSourceMiddleware: sdk.DefaultSourceMiddleware{
+					SourceWithSchemaExtraction: sdk.SourceWithSchemaExtraction{
+						PayloadEnabled: lang.Ptr(false),
+						KeyEnabled:     lang.Ptr(false),
+					},
+				},
 			},
-		)...,
+		},
 	)
 }
 
 // Parameters is a map of named Parameters that describe how to configure the [Source].
 //
 //nolint:funlen,nolintlint // yeah, this function can become long at some point.
-func (s *Source) Parameters() config.Parameters {
-	return map[string]config.Parameter{
-		mconfig.KeyURI: {
-			Default: "mongodb://localhost:27017",
-			Description: "The connection string. " +
-				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
-		},
-		mconfig.KeyDB: {
-			Default:     "",
-			Description: "The name of a database the connector must work with.",
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
-		},
-		mconfig.KeyCollection: {
-			Default:     "",
-			Description: "The name of a collection the connector must read from.",
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
-		},
-		mconfig.KeyAuthUsername: {
-			Default:     "",
-			Description: "The username.",
-		},
-		mconfig.KeyAuthPassword: {
-			Default:     "",
-			Description: "The user's password.",
-		},
-		mconfig.KeyAuthDB: {
-			Default:     "",
-			Description: "The name of a database that contains the user's authentication data.",
-		},
-		mconfig.KeyAuthMechanism: {
-			Default: "",
-			Description: "The authentication mechanism. " +
-				"The default mechanism, which is defined depending on the version of your MongoDB server.",
-		},
-		mconfig.KeyAuthTLSCAFile: {
-			Default: "",
-			Description: "The path to either a single or a bundle of certificate authorities" +
-				" to trust when making a TLS connection.",
-		},
-		mconfig.KeyAuthTLSCertificateKeyFile: {
-			Default:     "",
-			Description: "The path to the client certificate file or the client private key file.",
-		},
-		ConfigKeyBatchSize: {
-			Default:     "1000",
-			Description: "The size of a document batch.",
-		},
-		ConfigKeySnapshot: {
-			Default: "true",
-			Description: "The field determines whether or not the connector " +
-				"will take a snapshot of the entire collection before starting CDC mode.",
-		},
-		ConfigKeyOrderingField: {
-			Default: "_id",
-			Description: "The name of a field that is used for ordering " +
-				"collection documents when capturing a snapshot.",
-		},
-	}
-}
-
-// Configure provides the connector with the configuration that is validated and stored.
-// In case the configuration is not valid it returns an error.
-func (s *Source) Configure(_ context.Context, raw config.Config) error {
-	sourceConfig, err := ParseConfig(raw)
-	if err != nil {
-		return fmt.Errorf("parse source config: %w", err)
-	}
-
-	s.config = sourceConfig
-
-	return nil
-}
 
 // Open opens needed connections and prepares to start producing records.
 func (s *Source) Open(ctx context.Context, sdkPosition opencdc.Position) error {

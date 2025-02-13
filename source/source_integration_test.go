@@ -12,22 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package source
+package source_test
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	mongoConn "github.com/conduitio-labs/conduit-connector-mongo"
+	"github.com/conduitio-labs/conduit-connector-mongo/codec"
+	"github.com/conduitio-labs/conduit-connector-mongo/source"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"github.com/matryer/is"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -42,37 +46,36 @@ const (
 func TestSource_Open_failDatabaseNotExist(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	err = source.Open(ctx, nil)
+	err := underTest.Open(ctx, nil)
 	is.True(err != nil)
-	is.Equal(err.Error(), fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, sourceConfig[config.KeyDB]))
+	is.Equal(
+		err.Error(),
+		fmt.Sprintf(`get mongo collection: database "%s" doesn't exist`, cfg.DB),
+	)
 }
 
 func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -80,9 +83,9 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	})
 
 	// connect to a test database (this will create it automatically)
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
+	testDatabase := mongoClient.Database(cfg.DB)
 	// create a test collection with a wrong name
-	wrongName := sourceConfig[config.KeyCollection] + "s"
+	wrongName := cfg.Collection + "s"
 	is.NoErr(testDatabase.CreateCollection(ctx, wrongName))
 	testCollection := testDatabase.Collection(wrongName)
 	// drop the created test collection after the test
@@ -91,28 +94,26 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 		is.NoErr(err)
 	})
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.True(err != nil)
 	is.Equal(err.Error(), fmt.Sprintf(
-		`get mongo collection: collection "%s" doesn't exist`, sourceConfig[config.KeyCollection]),
+		`get mongo collection: collection "%s" doesn't exist`, cfg.Collection),
 	)
 }
 
 func TestSource_Read_successSnapshot(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -120,9 +121,9 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -133,10 +134,10 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	testItem, err := createTestItem(ctx, testCollection)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.NoErr(err)
 
-	record, err := source.Read(ctx)
+	record, err := underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationSnapshot)
 	is.Equal(record.Payload.After, opencdc.RawData(testItem.Bytes()))
@@ -145,18 +146,16 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 func TestSource_Read_continueSnapshot(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -164,9 +163,9 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -180,11 +179,11 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	secondTestItem, err := createTestItem(ctx, testCollection)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.NoErr(err)
 
 	// check the first item
-	record, err := source.Read(ctx)
+	record, err := underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationSnapshot)
 	is.Equal(record.Payload.After, opencdc.RawData(firstTestItem.Bytes()))
@@ -193,17 +192,17 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	err = source.Teardown(ctx)
+	err = underTest.Teardown(ctx)
 	is.NoErr(err)
 
 	// restart the source after the pause,
 	// with the last record's position
-	err = source.Open(ctx, record.Position)
+	err = underTest.Open(ctx, record.Position)
 	is.NoErr(err)
 
 	// check that the connector can still see the second item
 	// after the pause
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationSnapshot)
 	is.Equal(record.Payload.After, opencdc.RawData(secondTestItem.Bytes()))
@@ -212,18 +211,16 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 func TestSource_Read_successCDC(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -231,20 +228,20 @@ func TestSource_Read_successCDC(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
 		is.NoErr(err)
 	})
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.NoErr(err)
 
 	// we expect backoff retry and switch to CDC mode here
-	_, err = source.Read(ctx)
+	_, err = underTest.Read(ctx)
 	is.Equal(err, sdk.ErrBackoffRetry)
 
 	// insert a test item to the test collection
@@ -252,7 +249,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	is.NoErr(err)
 
 	// compare the record operation and its payload
-	record, err := source.Read(ctx)
+	record, err := underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationCreate)
 	is.Equal(record.Payload.After, opencdc.RawData(testItem.Bytes()))
@@ -262,7 +259,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	is.NoErr(err)
 
 	// compare the record operation and its payload
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationUpdate)
 	is.Equal(record.Payload.After, opencdc.RawData(updatedTestItem.Bytes()))
@@ -272,7 +269,7 @@ func TestSource_Read_successCDC(t *testing.T) {
 	is.NoErr(err)
 
 	// compare the record operation, we expect it to be delete
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationDelete)
 }
@@ -280,18 +277,16 @@ func TestSource_Read_successCDC(t *testing.T) {
 func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -299,9 +294,9 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
@@ -312,11 +307,11 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	snapshotItem, err := createTestItem(ctx, testCollection)
 	is.NoErr(err)
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.NoErr(err)
 
 	// we expect a snapshot record
-	record, err := source.Read(ctx)
+	record, err := underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationSnapshot)
 	is.Equal(record.Payload.After, opencdc.RawData(snapshotItem.Bytes()))
@@ -326,7 +321,7 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	err = source.Teardown(ctx)
+	err = underTest.Teardown(ctx)
 	is.NoErr(err)
 
 	// insert a test item to the test collection while the source is stopped
@@ -338,17 +333,17 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	is.NoErr(err)
 
 	// resume the source
-	err = source.Open(ctx, record.Position)
+	err = underTest.Open(ctx, record.Position)
 	is.NoErr(err)
 
 	// compare the record operation and its payload
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationCreate)
 	is.Equal(record.Payload.After, opencdc.RawData(cdcCreateItem.Bytes()))
 
 	// compare the record operation and its payload
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationUpdate)
 	is.Equal(record.Payload.After, opencdc.RawData(cdcUpdateItem.Bytes()))
@@ -357,18 +352,16 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 func TestSource_Read_continueCDC(t *testing.T) {
 	is := is.New(t)
 
-	// prepare a config, configure and open a new source
-	sourceConfig := prepareConfig(t)
-
-	source := NewSource()
+	underTest := source.NewSource()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := source.Configure(ctx, sourceConfig)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*source.Config)
+	prepareConfig(t, cfg)
 
-	mongoClient, err := createTestMongoClient(ctx, sourceConfig[config.KeyURI])
+	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
 		err = mongoClient.Disconnect(context.Background())
@@ -376,20 +369,20 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	})
 
 	// connect to the test database and create the test collection
-	testDatabase := mongoClient.Database(sourceConfig[config.KeyDB])
-	is.NoErr(testDatabase.CreateCollection(ctx, sourceConfig[config.KeyCollection]))
-	testCollection := testDatabase.Collection(sourceConfig[config.KeyCollection])
+	testDatabase := mongoClient.Database(cfg.DB)
+	is.NoErr(testDatabase.CreateCollection(ctx, cfg.Collection))
+	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
 		err = testCollection.Drop(context.Background())
 		is.NoErr(err)
 	})
 
-	err = source.Open(ctx, nil)
+	err = underTest.Open(ctx, nil)
 	is.NoErr(err)
 
 	// we expect backoff retry and switch to CDC mode here
-	_, err = source.Read(ctx)
+	_, err = underTest.Read(ctx)
 	is.Equal(err, sdk.ErrBackoffRetry)
 
 	// insert a test item to the test collection
@@ -397,7 +390,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	is.NoErr(err)
 
 	// compare the record operation and its payload
-	record, err := source.Read(ctx)
+	record, err := underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationCreate)
 	is.Equal(record.Payload.After, opencdc.RawData(firstTestItem.Bytes()))
@@ -407,7 +400,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	err = source.Teardown(ctx)
+	err = underTest.Teardown(ctx)
 	is.NoErr(err)
 
 	// create another test item
@@ -420,17 +413,17 @@ func TestSource_Read_continueCDC(t *testing.T) {
 
 	// restart the source after the pause,
 	// with the last record's position
-	err = source.Open(ctx, record.Position)
+	err = underTest.Open(ctx, record.Position)
 	is.NoErr(err)
 
 	// check that the second item has been inserted
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationCreate)
 	is.Equal(record.Payload.After, opencdc.RawData(secondTestItem.Bytes()))
 
 	// check that the first item has been updated
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationUpdate)
 	is.Equal(record.Payload.After, opencdc.RawData(updatedFirstItem.Bytes()))
@@ -440,7 +433,7 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	err = source.Teardown(ctx)
+	err = underTest.Teardown(ctx)
 	is.NoErr(err)
 
 	// delete both test items
@@ -452,23 +445,23 @@ func TestSource_Read_continueCDC(t *testing.T) {
 
 	// restart the source one more time,
 	// with the last record's position
-	err = source.Open(ctx, record.Position)
+	err = underTest.Open(ctx, record.Position)
 	is.NoErr(err)
 
 	// check that both items have been deleted
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationDelete)
 	is.Equal(record.Key, opencdc.StructuredData{"_id": firstTestItem["_id"]})
 
-	record, err = source.Read(ctx)
+	record, err = underTest.Read(ctx)
 	is.NoErr(err)
 	is.Equal(record.Operation, opencdc.OperationDelete)
 	is.Equal(record.Key, opencdc.StructuredData{"_id": secondTestItem["_id"]})
 }
 
 // prepareConfig prepares a config with the required fields.
-func prepareConfig(t *testing.T) map[string]string {
+func prepareConfig(t *testing.T, cfg *source.Config) {
 	t.Helper()
 
 	uri := os.Getenv(testEnvNameURI)
@@ -476,10 +469,19 @@ func prepareConfig(t *testing.T) map[string]string {
 		t.Skipf("%s env var must be set", testEnvNameURI)
 	}
 
-	return map[string]string{
-		config.KeyURI:        uri,
-		config.KeyDB:         testDB,
-		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+	cfgMap := map[string]string{
+		"uri":        uri,
+		"db":         testDB,
+		"collection": fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+	}
+	err := sdk.Util.ParseConfig(context.Background(), cfgMap, cfg, mongoConn.Connector.NewSpecification().SourceParams)
+	if err != nil {
+		t.Logf("parse configuration error: %v", err)
+	}
+
+	err = cfg.Validate(context.Background())
+	if err != nil {
+		t.Logf("config validation error: %v", err)
 	}
 }
 
@@ -493,6 +495,13 @@ func createTestMongoClient(ctx context.Context, uri string) (*mongo.Client, erro
 	}
 
 	return mongoClient, nil
+}
+
+func newBSONCodecRegistry() *bsoncodec.Registry {
+	registry := bson.NewRegistry()
+	registry.RegisterKindEncoder(reflect.String, codec.StringObjectIDCodec{})
+
+	return registry
 }
 
 // createTestItem writes a random item to a collection and returns it.

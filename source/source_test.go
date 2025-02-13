@@ -17,61 +17,14 @@ package source
 import (
 	"context"
 	"errors"
-	"net/url"
 	"testing"
 	"time"
 
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/source/mock"
 	"github.com/conduitio/conduit-commons/opencdc"
 	"github.com/matryer/is"
 	"go.uber.org/mock/gomock"
 )
-
-func TestSource_Configure_success(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	s := Source{}
-
-	err := s.Configure(context.Background(), map[string]string{
-		config.KeyURI:        "mongodb://localhost:27017",
-		config.KeyDB:         "test",
-		config.KeyCollection: "users",
-	})
-	is.NoErr(err)
-
-	want := Config{
-		Config: config.Config{
-			URI: &url.URL{
-				Scheme: "mongodb",
-				Host:   "localhost:27017",
-			},
-			DB:         "test",
-			Collection: "users",
-		},
-		BatchSize:     defaultBatchSize,
-		Snapshot:      defaultSnapshot,
-		OrderingField: defaultOrderingField,
-	}
-	is.Equal(s.config, want)
-}
-
-func TestSource_Configure_failure(t *testing.T) {
-	t.Parallel()
-
-	is := is.New(t)
-
-	s := Source{}
-
-	err := s.Configure(context.Background(), map[string]string{
-		config.KeyURI:        "mong\\'odb://localhost:27017",
-		config.KeyDB:         "test",
-		config.KeyCollection: "users",
-	})
-	is.True(err != nil)
-}
 
 func TestSource_Read_success(t *testing.T) {
 	t.Parallel()

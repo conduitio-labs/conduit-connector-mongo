@@ -83,7 +83,7 @@ func (e changeStreamEvent) toRecord() (opencdc.Record, error) {
 
 	// set the record metadata
 	metadata := make(opencdc.Metadata)
-	metadata[metadataFieldCollection] = e.Namespace.Collection
+	metadata.SetCollection(e.Namespace.Collection)
 	metadata.SetCreatedAt(e.WallTime)
 
 	docJSON, err := json.Marshal(e.FullDocument)

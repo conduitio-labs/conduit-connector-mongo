@@ -1,33 +1,9 @@
 # Conduit Connector MongoDB
 
-## General
-
 The [MongoDB](https://www.mongodb.com/) connector is one of Conduit plugins. It
 provides both, a source and a destination MongoDB connector.
 
-### Prerequisites
-
-- [Go](https://go.dev/) 1.23+
-- [MongoDB](https://www.mongodb.com/) [replica set](https://www.mongodb.com/docs/manual/replication/) (
-  at least single-node)
-  or [sharded cluster](https://www.mongodb.com/docs/manual/sharding/)
-  with [WiredTiger](https://www.mongodb.com/docs/manual/core/wiredtiger/)
-  storage engine
-- [Docker](https://www.docker.com/)
-- (optional) [golangci-lint](https://github.com/golangci/golangci-lint) v1.55.2
-
-### How to build it
-
-Run `make build`.
-
-### Development
-
-Run `make install-tools` to install all the required tools.
-
-Run `make test` to run all the units and `make test-integration` to run all the
-integration tests, which require Docker to be installed and running. The command
-will handle starting and stopping docker container for you.
-
+<!-- readmegen:description -->
 ## Source
 
 The MongoDB Source Connector connects to a MongoDB with the provided `uri`, `db`
@@ -73,23 +49,6 @@ so the CDC process is resumble.
 > If CDC is not possible, like in the case with CosmosDB, the connector only
 > supports detecting insert operations by polling for new documents.
 
-### Configuration
-
-| name                          | description                                                                                                                         | required | default                                                                                                                                                    |
-|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `uri`                         | The connection string. The URI can contain host names, IPv4/IPv6 literals, or an SRV record.                                        | false    | `mongodb://localhost:27017`                                                                                                                                |
-| `db`                          | The name of a database the connector must work with.                                                                                | **true** |                                                                                                                                                            |
-| `collection`                  | The name of a collection the connector must read from.                                                                              | **true** |                                                                                                                                                            |
-| `auth.username`               | The username.                                                                                                                       | false    |                                                                                                                                                            |
-| `auth.password`               | The user's password.                                                                                                                | false    |                                                                                                                                                            |
-| `auth.db`                     | The name of a database that contains the user's authentication data.                                                                | false    | `admin`                                                                                                                                                    |
-| `auth.mechanism`              | The authentication mechanism. The available values are `SCRAM-SHA-256`, `SCRAM-SHA-1`, `MONGODB-CR`, `MONGODB-AWS`, `MONGODB-X509`. | false    | The default mechanism that [defined depending on your MongoDB server version](https://www.mongodb.com/docs/drivers/go/current/fundamentals/auth/#default). |
-| `auth.tls.caFile`             | The path to either a single or a bundle of certificate authorities to trust when making a TLS connection.                           | false    |                                                                                                                                                            |
-| `auth.tls.certificateKeyFile` | The path to the client certificate file or the client private key file.                                                             | false    |                                                                                                                                                            |
-| `batchSize`                   | The size of a document batch.                                                                                                       | false    | `1000`                                                                                                                                                     |
-| `snapshot`                    | The field determines whether or not the connector will take a snapshot of the entire collection before starting CDC mode.           | false    | `true`                                                                                                                                                     |
-| `orderingField`               | The name of a field that is used for ordering collection documents when capturing a snapshot.                                       | false    | `_id`                                                                                                                                                      |
-
 ### Key handling
 
 The connector always uses the `_id` field as a key.
@@ -105,25 +64,11 @@ keys. Because of this, each record is individually parsed and written.
 
 ### Collection name
 
-If a record contains a `mongo.collection` property in its metadata it will be
+If a record contains an `opencdc.collection` property in its metadata it will be
 written in that collection, otherwise it will fall back to use the `collection`
 configured in the connector. Thus, a Destination can support multiple
 collections in the same connector, as long as the user has proper access to
 those collections.
-
-### Configuration
-
-| name                          | description                                                                                                                         | required | default                                                                                                                                                    |
-|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `uri`                         | The connection string. The URI can contain host names, IPv4/IPv6 literals, or an SRV record.                                        | false    | `mongodb://localhost:27017`                                                                                                                                |
-| `db`                          | The name of a database the connector must work with.                                                                                | **true** |                                                                                                                                                            |
-| `collection`                  | The name of a collection the connector must write to.                                                                               | **true** |                                                                                                                                                            |
-| `auth.username`               | The username.                                                                                                                       | false    |                                                                                                                                                            |
-| `auth.password`               | The user's password.                                                                                                                | false    |                                                                                                                                                            |
-| `auth.db`                     | The name of a database that contains the user's authentication data.                                                                | false    | `admin`                                                                                                                                                    |
-| `auth.mechanism`              | The authentication mechanism. The available values are `SCRAM-SHA-256`, `SCRAM-SHA-1`, `MONGODB-CR`, `MONGODB-AWS`, `MONGODB-X509`. | false    | The default mechanism that [defined depending on your MongoDB server version](https://www.mongodb.com/docs/drivers/go/current/fundamentals/auth/#default). |
-| `auth.tls.caFile`             | The path to either a single or a bundle of certificate authorities to trust when making a TLS connection.                           | false    |                                                                                                                                                            |
-| `auth.tls.certificateKeyFile` | The path to the client certificate file or the client private key file.                                                             | false    |                                                                                                                                                            |
 
 ### Key handling
 
@@ -131,5 +76,238 @@ The connector uses all keys from an `opencdc.Record` when updating and deleting
 documents.
 
 If the `_id` field can be converted to a `bson.ObjectID`, the connector converts
-it, otherwise, it uses it as it is.
+it, otherwise, it uses it as it is.<!-- /readmegen:description -->
+
+### Source Configuration Parameters
+
+<!-- readmegen:source.parameters.yaml -->
+```yaml
+version: 2.2
+pipelines:
+  - id: example
+    status: running
+    connectors:
+      - id: example
+        plugin: "mongo"
+        settings:
+          # Collection is the name of a collection the connector must write to
+          # (destination) or read from (source).
+          # Type: string
+          # Required: yes
+          collection: ""
+          # DB is the name of a database the connector must work with.
+          # Type: string
+          # Required: yes
+          db: ""
+          # AWSSessionToken is an AWS session token.
+          # Type: string
+          # Required: no
+          auth.awsSessionToken: ""
+          # DB is the name of a database that contains the user's authentication
+          # data.
+          # Type: string
+          # Required: no
+          auth.db: ""
+          # Mechanism is the authentication mechanism.
+          # Type: string
+          # Required: no
+          auth.mechanism: ""
+          # Password is the user's password.
+          # Type: string
+          # Required: no
+          auth.password: ""
+          # TLSCAFile is the path to either a single or a bundle of certificate
+          # authorities to trust when making a TLS connection.
+          # Type: string
+          # Required: no
+          auth.tls.caFile: ""
+          # TLSCertificateKeyFile is the path to the client certificate file or
+          # the client private key file.
+          # Type: string
+          # Required: no
+          auth.tls.certificateKeyFile: ""
+          # Username is the username.
+          # Type: string
+          # Required: no
+          auth.username: ""
+          # BatchSize is the size of a document batch.
+          # Type: int
+          # Required: no
+          batchSize: "1000"
+          # OrderingField is the name of a field that is used for ordering
+          # collection documents when capturing a snapshot.
+          # Type: string
+          # Required: no
+          orderingField: "_id"
+          # Snapshot determines whether the connector will take a snapshot of
+          # the entire collection before starting CDC mode.
+          # Type: bool
+          # Required: no
+          snapshot: "true"
+          # URI is the connection string. The URI can contain host names,
+          # IPv4/IPv6 literals, or an SRV record.
+          # Type: string
+          # Required: no
+          uri: "mongodb://localhost:27017"
+          # Maximum delay before an incomplete batch is read from the source.
+          # Type: duration
+          # Required: no
+          sdk.batch.delay: "0"
+          # Maximum size of batch before it gets read from the source.
+          # Type: int
+          # Required: no
+          sdk.batch.size: "0"
+          # Specifies whether to use a schema context name. If set to false, no
+          # schema context name will be used, and schemas will be saved with the
+          # subject name specified in the connector (not safe because of name
+          # conflicts).
+          # Type: bool
+          # Required: no
+          sdk.schema.context.enabled: "true"
+          # Schema context name to be used. Used as a prefix for all schema
+          # subject names. If empty, defaults to the connector ID.
+          # Type: string
+          # Required: no
+          sdk.schema.context.name: ""
+          # Whether to extract and encode the record key with a schema.
+          # Type: bool
+          # Required: no
+          sdk.schema.extract.key.enabled: "false"
+          # The subject of the key schema. If the record metadata contains the
+          # field "opencdc.collection" it is prepended to the subject name and
+          # separated with a dot.
+          # Type: string
+          # Required: no
+          sdk.schema.extract.key.subject: "key"
+          # Whether to extract and encode the record payload with a schema.
+          # Type: bool
+          # Required: no
+          sdk.schema.extract.payload.enabled: "false"
+          # The subject of the payload schema. If the record metadata contains
+          # the field "opencdc.collection" it is prepended to the subject name
+          # and separated with a dot.
+          # Type: string
+          # Required: no
+          sdk.schema.extract.payload.subject: "payload"
+          # The type of the payload schema.
+          # Type: string
+          # Required: no
+          sdk.schema.extract.type: "avro"
+```
+<!-- /readmegen:source.parameters.yaml -->
+
+### Configuration
+
+<!-- readmegen:destination.parameters.yaml -->
+```yaml
+version: 2.2
+pipelines:
+  - id: example
+    status: running
+    connectors:
+      - id: example
+        plugin: "mongo"
+        settings:
+          # Collection is the name of a collection the connector must write to
+          # (destination) or read from (source).
+          # Type: string
+          # Required: yes
+          collection: ""
+          # DB is the name of a database the connector must work with.
+          # Type: string
+          # Required: yes
+          db: ""
+          # AWSSessionToken is an AWS session token.
+          # Type: string
+          # Required: no
+          auth.awsSessionToken: ""
+          # DB is the name of a database that contains the user's authentication
+          # data.
+          # Type: string
+          # Required: no
+          auth.db: ""
+          # Mechanism is the authentication mechanism.
+          # Type: string
+          # Required: no
+          auth.mechanism: ""
+          # Password is the user's password.
+          # Type: string
+          # Required: no
+          auth.password: ""
+          # TLSCAFile is the path to either a single or a bundle of certificate
+          # authorities to trust when making a TLS connection.
+          # Type: string
+          # Required: no
+          auth.tls.caFile: ""
+          # TLSCertificateKeyFile is the path to the client certificate file or
+          # the client private key file.
+          # Type: string
+          # Required: no
+          auth.tls.certificateKeyFile: ""
+          # Username is the username.
+          # Type: string
+          # Required: no
+          auth.username: ""
+          # URI is the connection string. The URI can contain host names,
+          # IPv4/IPv6 literals, or an SRV record.
+          # Type: string
+          # Required: no
+          uri: "mongodb://localhost:27017"
+          # Maximum delay before an incomplete batch is written to the
+          # destination.
+          # Type: duration
+          # Required: no
+          sdk.batch.delay: "0"
+          # Maximum size of batch before it gets written to the destination.
+          # Type: int
+          # Required: no
+          sdk.batch.size: "0"
+          # Allow bursts of at most X records (0 or less means that bursts are
+          # not limited). Only takes effect if a rate limit per second is set.
+          # Note that if `sdk.batch.size` is bigger than `sdk.rate.burst`, the
+          # effective batch size will be equal to `sdk.rate.burst`.
+          # Type: int
+          # Required: no
+          sdk.rate.burst: "0"
+          # Maximum number of records written per second (0 means no rate
+          # limit).
+          # Type: float
+          # Required: no
+          sdk.rate.perSecond: "0"
+          # The format of the output record. See the Conduit documentation for a
+          # full list of supported formats
+          # (https://conduit.io/docs/using/connectors/configuration-parameters/output-format).
+          # Type: string
+          # Required: no
+          sdk.record.format: "opencdc/json"
+          # Options to configure the chosen output record format. Options are
+          # normally key=value pairs separated with comma (e.g.
+          # opt1=val2,opt2=val2), except for the `template` record format, where
+          # options are a Go template.
+          # Type: string
+          # Required: no
+          sdk.record.format.options: ""
+          # Whether to extract and decode the record key with a schema.
+          # Type: bool
+          # Required: no
+          sdk.schema.extract.key.enabled: "true"
+          # Whether to extract and decode the record payload with a schema.
+          # Type: bool
+          # Required: no
+          sdk.schema.extract.payload.enabled: "true"
+```
+<!-- /readmegen:destination.parameters.yaml -->
+
+### How to build it
+
+Run `make build`.
+
+### Development
+
+Run `make install-tools` to install all the required tools.
+
+Run `make test` to run all the units and `make test-integration` to run all the
+integration tests, which require Docker to be installed and running. The command
+will handle starting and stopping docker container for you.
+
 ![scarf pixel](https://static.scarf.sh/a.png?x-pxid=528a9760-d573-4524-8f65-74a5e4d402e8)

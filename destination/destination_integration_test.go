@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package destination
+package destination_test
 
 import (
 	"context"
@@ -23,7 +23,8 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit"
-	"github.com/conduitio-labs/conduit-connector-mongo/config"
+	mongoConn "github.com/conduitio-labs/conduit-connector-mongo"
+	"github.com/conduitio-labs/conduit-connector-mongo/destination"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
@@ -48,33 +49,32 @@ const (
 func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
-	destination := NewDestination()
+	underTest := destination.NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*destination.Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
 		err = col.Drop(context.Background())
 		is.NoErr(err)
 
-		err = destination.Teardown(ctx)
+		err = underTest.Teardown(ctx)
 		is.NoErr(err)
 	})
 
-	err = destination.Open(ctx)
+	err = underTest.Open(ctx)
 	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordSnapshot(
+	n, err := underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordSnapshot(
 		nil, nil,
 		// in insert keys are not used, so we can omit it
 		nil,
@@ -92,33 +92,32 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 func TestDestination_Write_insertSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
-	destination := NewDestination()
+	underTest := destination.NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*destination.Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
 		err = col.Drop(context.Background())
 		is.NoErr(err)
 
-		err = destination.Teardown(ctx)
+		err = underTest.Teardown(ctx)
 		is.NoErr(err)
 	})
 
-	err = destination.Open(ctx)
+	err = underTest.Open(ctx)
 	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx,
+	n, err := underTest.Write(ctx,
 		[]opencdc.Record{sdk.Util.Source.NewRecordCreate(
 			nil,
 			nil,
@@ -136,33 +135,32 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 func TestDestination_Write_updateSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
-	destination := NewDestination()
+	underTest := destination.NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*destination.Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
 		err = col.Drop(context.Background())
 		is.NoErr(err)
 
-		err = destination.Teardown(ctx)
+		err = underTest.Teardown(ctx)
 		is.NoErr(err)
 	})
 
-	err = destination.Open(ctx)
+	err = underTest.Open(ctx)
 	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
@@ -171,7 +169,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.Equal(n, 1)
 
 	testItem[testNameFieldName] = gofakeit.LastName()
-	n, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
+	n, err = underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
 		opencdc.StructuredData{testIDFieldName: testItem[testIDFieldName]},
 		opencdc.StructuredData{}, // in update we are not using this field, so we can omit it
@@ -189,33 +187,32 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
-	destination := NewDestination()
+	underTest := destination.NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*destination.Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
 		err = col.Drop(context.Background())
 		is.NoErr(err)
 
-		err = destination.Teardown(ctx)
+		err = underTest.Teardown(ctx)
 		is.NoErr(err)
 	})
 
-	err = destination.Open(ctx)
+	err = underTest.Open(ctx)
 	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
@@ -223,7 +220,7 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	_, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
+	_, err = underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordUpdate(
 		nil, nil,
 		opencdc.StructuredData{},
 		opencdc.StructuredData{}, // in update we are not using this field, so we can omit it
@@ -238,33 +235,32 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is := is.New(t)
 
-	cfg := prepareConfig(t)
-
-	destination := NewDestination()
+	underTest := destination.NewDestination()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := destination.Configure(ctx, cfg)
-	is.NoErr(err)
+	//nolint:forcetypeassert // we know it's *Config
+	cfg := underTest.Config().(*destination.Config)
+	prepareConfig(t, cfg)
 
-	col, err := getTestCollection(ctx, cfg[config.KeyURI], cfg[config.KeyCollection])
+	col, err := getTestCollection(ctx, cfg.URIStr, cfg.Collection)
 	is.NoErr(err)
 
 	t.Cleanup(func() {
 		err = col.Drop(context.Background())
 		is.NoErr(err)
 
-		err = destination.Teardown(ctx)
+		err = underTest.Teardown(ctx)
 		is.NoErr(err)
 	})
 
-	err = destination.Open(ctx)
+	err = underTest.Open(ctx)
 	is.NoErr(err)
 
 	testItem := createTestItem(t)
 
-	n, err := destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
+	n, err := underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordCreate(
 		nil,
 		nil,
 		nil,
@@ -272,7 +268,7 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is.NoErr(err)
 	is.Equal(n, 1)
 
-	n, err = destination.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordDelete(
+	n, err = underTest.Write(ctx, []opencdc.Record{sdk.Util.Source.NewRecordDelete(
 		nil, nil,
 		opencdc.StructuredData{testIDFieldName: testItem[testIDFieldName]}, nil,
 	)})
@@ -335,7 +331,8 @@ func createTestItem(t *testing.T) map[string]any {
 	}
 }
 
-func prepareConfig(t *testing.T) map[string]string {
+// prepareConfig prepares a config with the required fields.
+func prepareConfig(t *testing.T, cfg *destination.Config) {
 	t.Helper()
 
 	uri := os.Getenv(testEnvNameURI)
@@ -343,9 +340,19 @@ func prepareConfig(t *testing.T) map[string]string {
 		t.Skipf("%s env var must be set", testEnvNameURI)
 	}
 
-	return map[string]string{
-		config.KeyURI:        uri,
-		config.KeyDB:         testDB,
-		config.KeyCollection: fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+	cfgMap := map[string]string{
+		"uri":        uri,
+		"db":         testDB,
+		"collection": fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+	}
+
+	err := sdk.Util.ParseConfig(context.Background(), cfgMap, cfg, mongoConn.Connector.NewSpecification().SourceParams)
+	if err != nil {
+		t.Logf("parse configuration error: %v", err)
+	}
+
+	err = cfg.Validate(context.Background())
+	if err != nil {
+		t.Logf("config validation error: %v", err)
 	}
 }

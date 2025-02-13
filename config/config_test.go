@@ -15,8 +15,7 @@
 package config
 
 import (
-	"net/url"
-	"reflect"
+	"context"
 	"testing"
 )
 
@@ -79,176 +78,83 @@ func TestAuthMechanism_IsValid(t *testing.T) {
 func TestParse(t *testing.T) {
 	t.Parallel()
 
-	type args struct {
-		raw map[string]string
-	}
-
 	tests := []struct {
 		name    string
-		args    args
-		want    Config
+		cfg     Config
 		wantErr bool
 	}{
 		{
-			name: "success_only_required_and_default_fields",
-			args: args{
-				raw: map[string]string{
-					KeyDB:         "test",
-					KeyCollection: "users",
-				},
-			},
-			want: Config{
-				URI: &url.URL{
-					Scheme: "mongodb",
-					Host:   "localhost:27017",
-				},
-				DB:         "test",
-				Collection: "users",
-			},
-			wantErr: false,
-		},
-		{
-			name: "success_custom_uri",
-			args: args{
-				raw: map[string]string{
-					KeyURI:        "mongodb://localhost:28088/?directConnection=true",
-					KeyDB:         "test",
-					KeyCollection: "users",
-				},
-			},
-			want: Config{
-				URI: &url.URL{
-					Scheme:   "mongodb",
-					Host:     "localhost:28088",
-					Path:     "/",
-					RawQuery: "directConnection=true",
-				},
-				DB:         "test",
-				Collection: "users",
-			},
-			wantErr: false,
-		},
-		{
 			name: "success_with_auth_mechanism",
-			args: args{
-				raw: map[string]string{
-					KeyURI:           "mongodb://localhost:27017",
-					KeyDB:            "test",
-					KeyCollection:    "users",
-					KeyAuthMechanism: "SCRAM-SHA-256",
-				},
-			},
-			want: Config{
-				URI: &url.URL{
-					Scheme: "mongodb",
-					Host:   "localhost:27017",
-				},
+			cfg: Config{
+				URIStr:     "mongodb://localhost:27017",
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
-					Mechanism: SCRAMSHA256,
+					Mechanism: AuthMechanism("SCRAM-SHA-256"),
 				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "success_with_auth_mechanism_lowercase",
-			args: args{
-				raw: map[string]string{
-					KeyURI:           "mongodb://localhost:27017",
-					KeyDB:            "test",
-					KeyCollection:    "users",
-					KeyAuthMechanism: "scram-sha-256",
-				},
-			},
-			want: Config{
-				URI: &url.URL{
-					Scheme: "mongodb",
-					Host:   "localhost:27017",
-				},
+			cfg: Config{
+				URIStr:     "mongodb://localhost:27017",
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
-					Mechanism: SCRAMSHA256,
+					Mechanism: AuthMechanism("scram-sha-256"),
 				},
 			},
+
 			wantErr: false,
 		},
 		{
 			name: "success_with_tls_configs",
-			args: args{
-				raw: map[string]string{
-					KeyURI:                       "mongodb://localhost:27017",
-					KeyDB:                        "test",
-					KeyCollection:                "users",
-					KeyAuthMechanism:             "SCRAM-SHA-256",
-					KeyAuthTLSCAFile:             "config.go", // pointed to the existing file
-					KeyAuthTLSCertificateKeyFile: "config.go", // pointed to the existing file
-				},
-			},
-			want: Config{
-				URI: &url.URL{
-					Scheme: "mongodb",
-					Host:   "localhost:27017",
-				},
+			cfg: Config{
+				URIStr:     "mongodb://localhost:27017",
 				DB:         "test",
 				Collection: "users",
 				Auth: AuthConfig{
-					Mechanism:             SCRAMSHA256,
+					Mechanism:             AuthMechanism("SCRAM-SHA-256"),
 					TLSCAFile:             "config.go",
 					TLSCertificateKeyFile: "config.go",
 				},
 			},
 			wantErr: false,
 		},
-		{
-			name: "fail_missing_required_field",
-			args: args{
-				raw: map[string]string{
-					KeyURI: "mongodb://localhost:27017",
-					KeyDB:  "test",
-				},
-			},
-			want:    Config{},
-			wantErr: true,
-		},
+
 		{
 			name: "fail_invalid_uri",
-			args: args{
-				raw: map[string]string{
-					KeyURI:        "mong\\'odb://localhost:27017",
-					KeyDB:         "test",
-					KeyCollection: "users",
-				},
+			cfg: Config{
+				URIStr:     "mong\\'odb://localhost:27017",
+				DB:         "test",
+				Collection: "users",
 			},
-			want:    Config{},
 			wantErr: true,
 		},
 		{
 			name: "fail_invalid_auth_mechanism",
-			args: args{
-				raw: map[string]string{
-					KeyURI:           "mongodb://localhost:27017",
-					KeyDB:            "test",
-					KeyCollection:    "users",
-					KeyAuthMechanism: "WRONG_AUTH",
+			cfg: Config{
+				URIStr:     "mongodb://localhost:27017",
+				DB:         "test",
+				Collection: "users",
+				Auth: AuthConfig{
+					Mechanism: AuthMechanism("WRONG_AUTH"),
 				},
 			},
-			want:    Config{},
 			wantErr: true,
 		},
 		{
 			name: "fail_tls_config_files_do_not_exist",
-			args: args{
-				raw: map[string]string{
-					KeyURI:                       "mongodb://localhost:27017",
-					KeyDB:                        "test",
-					KeyCollection:                "users",
-					KeyAuthTLSCAFile:             "wrong.ca",        // non-existent file
-					KeyAuthTLSCertificateKeyFile: "certificate.txt", // non-existent file
+			cfg: Config{
+				URIStr:     "mongodb://localhost:27017",
+				DB:         "test",
+				Collection: "users",
+				Auth: AuthConfig{
+					TLSCAFile:             "wrong.ca",
+					TLSCertificateKeyFile: "certificate.txt",
 				},
 			},
-			want:    Config{},
 			wantErr: true,
 		},
 	}
@@ -257,13 +163,9 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := Parse(tt.args.raw)
+			err := tt.cfg.Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Parse() error = %v, wantErr %v", err, tt.wantErr)
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Parse() = %v, want %v", got, tt.want)
 			}
 		})
 	}

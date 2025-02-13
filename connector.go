@@ -12,18 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate conn-sdk-cli specgen
+
 // Package mongo implements MongoDB connector for Conduit.
 // It provides both, a source and a destination MongoDB connector.
 package mongo
 
 import (
+	_ "embed"
+
 	"github.com/conduitio-labs/conduit-connector-mongo/destination"
 	"github.com/conduitio-labs/conduit-connector-mongo/source"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 )
 
+//go:embed connector.yaml
+var specs string
+
+var version = "(devel)"
+
 var Connector = sdk.Connector{
-	NewSpecification: Specification,
+	NewSpecification: sdk.YAMLSpecification(specs, version),
 	NewSource:        source.NewSource,
 	NewDestination:   destination.NewDestination,
 }

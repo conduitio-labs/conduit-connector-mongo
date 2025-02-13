@@ -27,9 +27,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// metadataFieldCollection is a name of a record metadata field that stores a MongoDB collection name.
-const metadataFieldCollection = "mongo.collection"
-
 // Combined is a combined iterator for MongoDB.
 // It consists of the cdc and snapshot iterators.
 // A snapshot is captured only if the snapshot is set to true.

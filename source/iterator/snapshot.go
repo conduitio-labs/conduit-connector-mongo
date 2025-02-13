@@ -154,7 +154,7 @@ func (s *snapshot) next(_ context.Context) (opencdc.Record, error) {
 
 	// set the record metadata
 	metadata := make(opencdc.Metadata)
-	metadata[metadataFieldCollection] = s.collection.Name()
+	metadata.SetCollection(s.collection.Name())
 	metadata.SetCreatedAt(time.Now())
 
 	elementBytes, err := json.Marshal(element)

@@ -23,9 +23,7 @@ import (
 
 	"github.com/conduitio-labs/conduit-connector-mongo/codec"
 	"github.com/conduitio-labs/conduit-connector-mongo/common"
-	mconfig "github.com/conduitio-labs/conduit-connector-mongo/config"
 	"github.com/conduitio-labs/conduit-connector-mongo/destination/writer"
-	"github.com/conduitio/conduit-commons/config"
 	"github.com/conduitio/conduit-commons/opencdc"
 	sdk "github.com/conduitio/conduit-connector-sdk"
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,75 +42,16 @@ type Destination struct {
 
 	writer Writer
 	client *mongo.Client
-	config mconfig.Config
+	config Config
+}
+
+func (d *Destination) Config() sdk.DestinationConfig {
+	return &d.config
 }
 
 // NewDestination creates new instance of the Destination.
 func NewDestination() sdk.Destination {
-	return sdk.DestinationWithMiddleware(&Destination{}, sdk.DefaultDestinationMiddleware()...)
-}
-
-// Parameters is a map of named Parameters that describe how to configure the Destination.
-func (d *Destination) Parameters() config.Parameters {
-	return map[string]config.Parameter{
-		mconfig.KeyURI: {
-			Default: "mongodb://localhost:27017",
-			Description: "The connection string. " +
-				"The URI can contain host names, IPv4/IPv6 literals, or an SRV record.",
-		},
-		mconfig.KeyDB: {
-			Default:     "",
-			Description: "The name of a database the connector must work with.",
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
-		},
-		mconfig.KeyCollection: {
-			Default:     "",
-			Description: "The name of a collection the connector must read from.",
-			Validations: []config.Validation{
-				config.ValidationRequired{},
-			},
-		},
-		mconfig.KeyAuthUsername: {
-			Default:     "",
-			Description: "The username.",
-		},
-		mconfig.KeyAuthPassword: {
-			Default:     "",
-			Description: "The user's password.",
-		},
-		mconfig.KeyAuthDB: {
-			Default:     "admin",
-			Description: "The name of a database that contains the user's authentication data.",
-		},
-		mconfig.KeyAuthMechanism: {
-			Default: "",
-			Description: "The authentication mechanism. " +
-				"The default mechanism, which is defined depending on the version of your MongoDB server.",
-		},
-		mconfig.KeyAuthTLSCAFile: {
-			Default: "",
-			Description: "The path to either a single or a bundle of certificate authorities" +
-				" to trust when making a TLS connection.",
-		},
-		mconfig.KeyAuthTLSCertificateKeyFile: {
-			Default:     "",
-			Description: "The path to the client certificate file or the client private key file.",
-		},
-	}
-}
-
-// Configure parses and initializes the config.
-func (d *Destination) Configure(_ context.Context, cfg config.Config) error {
-	configuration, err := mconfig.Parse(cfg)
-	if err != nil {
-		return fmt.Errorf("parse config: %w", err)
-	}
-
-	d.config = configuration
-
-	return nil
+	return sdk.DestinationWithMiddleware(&Destination{})
 }
 
 // Open makes sure everything is prepared to receive records.
