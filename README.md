@@ -172,7 +172,7 @@ pipelines:
           # Whether to extract and encode the record key with a schema.
           # Type: bool
           # Required: no
-          sdk.schema.extract.key.enabled: "false"
+          sdk.schema.extract.key.enabled: "true"
           # The subject of the key schema. If the record metadata contains the
           # field "opencdc.collection" it is prepended to the subject name and
           # separated with a dot.
@@ -182,7 +182,7 @@ pipelines:
           # Whether to extract and encode the record payload with a schema.
           # Type: bool
           # Required: no
-          sdk.schema.extract.payload.enabled: "false"
+          sdk.schema.extract.payload.enabled: "true"
           # The subject of the payload schema. If the record metadata contains
           # the field "opencdc.collection" it is prepended to the subject name
           # and separated with a dot.
