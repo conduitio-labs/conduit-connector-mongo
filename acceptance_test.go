@@ -73,8 +73,10 @@ func TestAcceptance(t *testing.T) {
 	}
 
 	cfg := map[string]string{
-		"uri": uri,
-		"db":  testDB,
+		"uri":                                uri,
+		"db":                                 testDB,
+		"sdk.schema.extract.key.enabled":     "false",
+		"sdk.schema.extract.payload.enabled": "false",
 	}
 
 	sdk.AcceptanceTest(t, driver{

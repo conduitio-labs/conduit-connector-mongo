@@ -20,4 +20,4 @@ jobs:
         run: make test GOTEST_FLAGS="-v -count=1 -race"
 
       - name: Integration test
-        run: make test-integration MONGODB_STARTUP_TIMEOUT=8 GOTEST_FLAGS="-v -count=1 -race"
+        run: make test-integration GOTEST_FLAGS="-v -count=1 -race"

@@ -16,7 +16,6 @@ package iterator
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -157,17 +156,12 @@ func (s *snapshot) next(_ context.Context) (opencdc.Record, error) {
 	metadata.SetCollection(s.collection.Name())
 	metadata.SetCreatedAt(time.Now())
 
-	elementBytes, err := json.Marshal(element)
-	if err != nil {
-		return opencdc.Record{}, fmt.Errorf("failed marshalling record into JSON: %w", err)
-	}
-
 	if s.polling {
 		return sdk.Util.Source.NewRecordCreate(
 			sdkPosition,
 			metadata,
 			opencdc.StructuredData{idFieldName: element[idFieldName]},
-			opencdc.RawData(elementBytes),
+			opencdc.StructuredData(element),
 		), nil
 	}
 
@@ -175,7 +169,7 @@ func (s *snapshot) next(_ context.Context) (opencdc.Record, error) {
 		sdkPosition,
 		metadata,
 		opencdc.StructuredData{idFieldName: element[idFieldName]},
-		opencdc.RawData(elementBytes),
+		opencdc.StructuredData(element),
 	), nil
 }
 
