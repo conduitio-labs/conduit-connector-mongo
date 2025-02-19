@@ -470,9 +470,11 @@ func prepareConfig(t *testing.T, cfg *source.Config) {
 	}
 
 	cfgMap := map[string]string{
-		"uri":        uri,
-		"db":         testDB,
-		"collection": fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+		"uri":                                uri,
+		"db":                                 testDB,
+		"collection":                         fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
+		"sdk.schema.extract.key.enabled":     "false",
+		"sdk.schema.extract.payload.enabled": "false",
 	}
 	err := sdk.Util.ParseConfig(context.Background(), cfgMap, cfg, mongoConn.Connector.NewSpecification().SourceParams)
 	if err != nil {
