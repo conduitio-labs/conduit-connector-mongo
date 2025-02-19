@@ -1,5 +1,4 @@
 VERSION = 				$(shell git describe --tags --dirty --always)
-MONGODB_STARTUP_TIMEOUT ?= 4
 
 .PHONY: build
 build:

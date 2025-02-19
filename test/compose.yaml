@@ -1,7 +1,7 @@
 services:
-  mongo1:
+  mongo:
     image: 'mongo:5'
-    container_name: mongo1
+    container_name: mongo
     command:
       - '--replSet'
       - test
