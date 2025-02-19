@@ -1,5 +1,4 @@
 VERSION = 				$(shell git describe --tags --dirty --always)
-MONGODB_STARTUP_TIMEOUT ?= 4
 
 .PHONY: build
 build:
@@ -11,16 +10,15 @@ test:
 
 .PHONY: test-integration
 test-integration:
-	docker run --rm -d -p 27017:27017 --name mongodb mongo --replSet=test
-	sleep $(MONGODB_STARTUP_TIMEOUT)
-	docker exec mongodb mongosh --eval "rs.initiate();"
+	docker compose -f test/compose.yaml up --quiet-pull -d --wait
 	export CONNECTION_URI=mongodb://localhost:27017/?directConnection=true && \
 	go test $(GOTEST_FLAGS) ./...; ret=$$?; \
-		docker stop mongodb; \
+		docker compose -f test/compose.yaml down; \
 		exit $$ret
 
 .PHONY: lint
 lint:
+	golangci-lint config verify
 	golangci-lint run
 
 .PHONY: generate

@@ -16,7 +16,6 @@ package iterator
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -56,7 +55,7 @@ type changeStreamEvent struct {
 	ID bson.Raw `bson:"_id"`
 	// DocumentKey contains the _id field of a document.
 	DocumentKey map[string]any `bson:"documentKey"`
-	// OperationType is the type of an operation that the Change Stream reports.
+	// OperationType is the type of operation that the Change Stream reports.
 	OperationType string `bson:"operationType"`
 	// WallTime is the server date and time of the database operation.
 	WallTime time.Time `bson:"wallTime"`
@@ -86,19 +85,15 @@ func (e changeStreamEvent) toRecord() (opencdc.Record, error) {
 	metadata.SetCollection(e.Namespace.Collection)
 	metadata.SetCreatedAt(e.WallTime)
 
-	docJSON, err := json.Marshal(e.FullDocument)
-	if err != nil {
-		return opencdc.Record{}, fmt.Errorf("failed marshalling into JSON: %w", err)
-	}
 	switch e.OperationType {
 	case operationTypeInsert:
 		return sdk.Util.Source.NewRecordCreate(
-			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), opencdc.RawData(docJSON),
+			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), opencdc.StructuredData(e.FullDocument),
 		), nil
 
 	case operationTypeUpdate:
 		return sdk.Util.Source.NewRecordUpdate(
-			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), nil, opencdc.RawData(docJSON),
+			sdkPosition, metadata, opencdc.StructuredData(e.DocumentKey), nil, opencdc.StructuredData(e.FullDocument),
 		), nil
 
 	case operationTypeDelete:

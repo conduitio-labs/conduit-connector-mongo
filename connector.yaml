@@ -199,7 +199,7 @@ specification:
       - name: sdk.schema.extract.key.enabled
         description: Whether to extract and encode the record key with a schema.
         type: bool
-        default: "false"
+        default: "true"
         validations: []
       - name: sdk.schema.extract.key.subject
         description: |-
@@ -212,7 +212,7 @@ specification:
       - name: sdk.schema.extract.payload.enabled
         description: Whether to extract and encode the record payload with a schema.
         type: bool
-        default: "false"
+        default: "true"
         validations: []
       - name: sdk.schema.extract.payload.subject
         description: |-
