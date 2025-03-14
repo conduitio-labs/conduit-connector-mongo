@@ -76,7 +76,7 @@ specification:
 
     If the `_id` field can be converted to a `bson.ObjectID`, the connector converts
     it, otherwise, it uses it as it is.
-  version: v0.2.1
+  version: v0.2.2
   author: Meroxa, Inc.
   source:
     parameters:
