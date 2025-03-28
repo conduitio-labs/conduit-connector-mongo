@@ -2,11 +2,13 @@ module github.com/conduitio-labs/conduit-connector-mongo
 
 go 1.23.2
 
+toolchain go1.24.1
+
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/conduitio/conduit-commons v0.5.2
 	github.com/conduitio/conduit-connector-sdk v0.13.3
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.17.3
