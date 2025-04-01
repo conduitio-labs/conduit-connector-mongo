@@ -1,6 +1,6 @@
 module github.com/conduitio-labs/conduit-connector-mongo
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
