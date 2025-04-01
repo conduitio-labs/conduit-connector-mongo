@@ -51,7 +51,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 
 	underTest := destination.NewDestination()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	//nolint:forcetypeassert // we know it's *Config
@@ -62,7 +62,7 @@ func TestDestination_Write_snapshotSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
-		err = col.Drop(context.Background())
+		err = col.Drop(t.Context())
 		is.NoErr(err)
 
 		err = underTest.Teardown(ctx)
@@ -94,7 +94,7 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 
 	underTest := destination.NewDestination()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	//nolint:forcetypeassert // we know it's *Config
@@ -105,7 +105,7 @@ func TestDestination_Write_insertSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
-		err = col.Drop(context.Background())
+		err = col.Drop(t.Context())
 		is.NoErr(err)
 
 		err = underTest.Teardown(ctx)
@@ -137,7 +137,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 
 	underTest := destination.NewDestination()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	//nolint:forcetypeassert // we know it's *Config
@@ -148,7 +148,7 @@ func TestDestination_Write_updateSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
-		err = col.Drop(context.Background())
+		err = col.Drop(t.Context())
 		is.NoErr(err)
 
 		err = underTest.Teardown(ctx)
@@ -189,7 +189,7 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 
 	underTest := destination.NewDestination()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	//nolint:forcetypeassert // we know it's *Config
@@ -200,7 +200,7 @@ func TestDestination_Write_updateFailureNoKeys(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
-		err = col.Drop(context.Background())
+		err = col.Drop(t.Context())
 		is.NoErr(err)
 
 		err = underTest.Teardown(ctx)
@@ -237,7 +237,7 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 
 	underTest := destination.NewDestination()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
 	//nolint:forcetypeassert // we know it's *Config
@@ -248,7 +248,7 @@ func TestDestination_Write_deleteSuccess(t *testing.T) {
 	is.NoErr(err)
 
 	t.Cleanup(func() {
-		err = col.Drop(context.Background())
+		err = col.Drop(t.Context())
 		is.NoErr(err)
 
 		err = underTest.Teardown(ctx)
@@ -346,12 +346,12 @@ func prepareConfig(t *testing.T, cfg *destination.Config) {
 		"collection": fmt.Sprintf("%s_%d", testCollectionPrefix, time.Now().UnixNano()),
 	}
 
-	err := sdk.Util.ParseConfig(context.Background(), cfgMap, cfg, mongoConn.Connector.NewSpecification().SourceParams)
+	err := sdk.Util.ParseConfig(t.Context(), cfgMap, cfg, mongoConn.Connector.NewSpecification().SourceParams)
 	if err != nil {
 		t.Logf("parse configuration error: %v", err)
 	}
 
-	err = cfg.Validate(context.Background())
+	err = cfg.Validate(t.Context())
 	if err != nil {
 		t.Logf("config validation error: %v", err)
 	}

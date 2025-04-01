@@ -1,32 +1,8 @@
-linters-settings:
-  gofmt:
-    simplify: false
-  govet:
-    disable:
-      - shadow
-  nolintlint:
-    allow-unused: false # report any unused nolint directives
-    require-explanation: true # require an explanation for nolint directives
-    require-specific: true # require nolint directives to mention the specific linter being suppressed
-  gocyclo:
-    min-complexity: 20
-  goconst:
-    ignore-tests: true
-  goheader:
-    template-path: '.golangci.goheader.template'
-    values:
-      regexp:
-        copyright-year: 20[2-9]\d
-  lll:
-    line-length: 120
-
+version: "2"
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  default: none
   enable:
     - bodyclose
-    # - depguard
     - copyloopvar
     - dogsled
     - durationcheck
@@ -42,22 +18,17 @@ linters:
     - gocritic
     - gocyclo
     - godot
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
-    - revive
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
-    - ineffassign
     - importas
+    - ineffassign
     - lll
-    - misspell
     - makezero
+    - misspell
     - mnd
     - nakedret
     - nilerr
@@ -67,14 +38,13 @@ linters:
     - nolintlint
     - paralleltest
     - predeclared
+    - revive
     - rowserrcheck
-    - staticcheck
-    - stylecheck
     - sqlclosecheck
+    - staticcheck
     - tagliatelle
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -82,53 +52,71 @@ linters:
     - wastedassign
     - whitespace
     - wrapcheck
-
-    # deprecated linters:
-    # - varcheck
-    # - ifshort
-    # - exhaustivestruct
-    # - deadcode
-    # - structcheck
-
-    # don't enable:
-    # - asciicheck
-    # - dupl
-    # - gochecknoglobals
-    # - gocognit
-    # - godox
-    # - goerr113
-    # - maligned
-    # - nestif
-    # - prealloc
-    # - testpackage
-    # - wsl
-    # - cyclop # not interested in package complexities at the moment
-
-# List of regexps of issue texts to exclude.
-issues:
-  exclude-rules:
-    - path: _test
-      linters:
-        - varnamelen
-        - testpackage
-        - nonamedreturns
-        - funlen # it can be annoying for table-driven tests
-        - dupl
-        - goerr113
-        - maintidx
-    - path: _integration_test
-      linters:
-        - varnamelen
-        - testpackage
-        - nonamedreturns
-        - funlen # it can be annoying for table-driven tests
-        - dupl
-        - goerr113
-        - maintidx
-        - paralleltest # we don't want to run the integration tests in parallel because we want deterministic results
-    - path: acceptance_test
-      linters:
-        - paralleltest
-    - path: codec 
-      linters:
-        - wrapcheck # the codec package contains mongo driver specific code and we don't need to wrap errors from there
+  settings:
+    gocyclo:
+      min-complexity: 20
+    goheader:
+      values:
+        regexp:
+          copyright-year: 20[2-9]\d
+      template-path: .golangci.goheader.template
+    lll:
+      line-length: 120
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - err113
+          - funlen
+          - maintidx
+          - nonamedreturns
+          - testpackage
+          - varnamelen
+        path: _test
+      - linters:
+          - dupl
+          - err113
+          - funlen
+          - maintidx
+          - nonamedreturns
+          - paralleltest
+          - testpackage
+          - varnamelen
+        path: _integration_test
+      - linters:
+          - paralleltest
+        path: acceptance_test
+      - linters:
+          - wrapcheck
+        path: codec
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      simplify: false
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
