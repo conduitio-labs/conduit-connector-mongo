@@ -15,7 +15,6 @@
 package config
 
 import (
-	"context"
 	"testing"
 )
 
@@ -163,7 +162,7 @@ func TestParse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := tt.cfg.Validate(context.Background())
+			err := tt.cfg.Validate(t.Context())
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("Parse() error = %v, wantErr %v", err, tt.wantErr)
 			}

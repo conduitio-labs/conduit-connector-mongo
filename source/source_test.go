@@ -15,7 +15,6 @@
 package source
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ func TestSource_Read_success(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	key := make(opencdc.StructuredData)
 	key["id"] = 1
@@ -69,7 +68,7 @@ func TestSource_Read_failHasNext(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockIterator(ctrl)
 	it.EXPECT().HasNext(ctx).Return(true, errors.New("get data: fail"))
@@ -89,7 +88,7 @@ func TestSource_Read_failNext(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockIterator(ctrl)
 	it.EXPECT().HasNext(ctx).Return(true, nil)
@@ -109,7 +108,7 @@ func TestSource_Teardown_success(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockIterator(ctrl)
 	it.EXPECT().Stop(ctx).Return(nil)
@@ -118,7 +117,7 @@ func TestSource_Teardown_success(t *testing.T) {
 		iterator: it,
 	}
 
-	err := s.Teardown(context.Background())
+	err := s.Teardown(t.Context())
 	is.NoErr(err)
 }
 
@@ -128,7 +127,7 @@ func TestSource_Teardown_failure(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockIterator(ctrl)
 	it.EXPECT().Stop(ctx).Return(errors.New("some error"))
@@ -137,6 +136,6 @@ func TestSource_Teardown_failure(t *testing.T) {
 		iterator: it,
 	}
 
-	err := s.Teardown(context.Background())
+	err := s.Teardown(t.Context())
 	is.Equal(err.Error(), "stop iterator: some error")
 }

@@ -15,7 +15,6 @@
 package destination
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -31,7 +30,7 @@ func TestDestination_Write_success(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockWriter(ctrl)
 	it.EXPECT().Write(ctx, opencdc.Record{}).Return(nil)
@@ -52,7 +51,7 @@ func TestDestination_Write_failInsertRecord(t *testing.T) {
 	is := is.New(t)
 
 	ctrl := gomock.NewController(t)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	it := mock.NewMockWriter(ctrl)
 	it.EXPECT().Write(ctx, opencdc.Record{}).Return(errors.New("insert record: fail"))
@@ -71,7 +70,7 @@ func TestDestination_Teardown_successWriterIsNil(t *testing.T) {
 
 	is := is.New(t)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	d := Destination{
 		writer: nil,

@@ -100,10 +100,10 @@ func beforeTest(cfg map[string]string) func(*testing.T) {
 		is := is.New(t)
 
 		// create a test mongo client
-		mongoClient, err := createTestMongoClient(context.Background(), cfg["uri"])
+		mongoClient, err := createTestMongoClient(t.Context(), cfg["uri"])
 		is.NoErr(err)
 		defer func() {
-			err = mongoClient.Disconnect(context.Background())
+			err = mongoClient.Disconnect(t.Context())
 			is.NoErr(err)
 		}()
 
@@ -111,7 +111,7 @@ func beforeTest(cfg map[string]string) func(*testing.T) {
 
 		// connect to the test database and create a collection
 		testDatabase := mongoClient.Database(cfg["db"])
-		is.NoErr(testDatabase.CreateCollection(context.Background(), cfg["collection"]))
+		is.NoErr(testDatabase.CreateCollection(t.Context(), cfg["collection"]))
 	}
 }
 
@@ -123,10 +123,10 @@ func afterTest(cfg map[string]string) func(*testing.T) {
 		is := is.New(t)
 
 		// create a test mongo client
-		mongoClient, err := createTestMongoClient(context.Background(), cfg["uri"])
+		mongoClient, err := createTestMongoClient(t.Context(), cfg["uri"])
 		is.NoErr(err)
 		defer func() {
-			err = mongoClient.Disconnect(context.Background())
+			err = mongoClient.Disconnect(t.Context())
 			is.NoErr(err)
 		}()
 
@@ -135,7 +135,7 @@ func afterTest(cfg map[string]string) func(*testing.T) {
 		testCollection := testDatabase.Collection(cfg["collection"])
 
 		// drop the test collection
-		err = testCollection.Drop(context.Background())
+		err = testCollection.Drop(t.Context())
 		is.NoErr(err)
 	}
 }
