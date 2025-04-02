@@ -78,7 +78,8 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -90,7 +91,8 @@ func TestSource_Open_failCollectionNotExist(t *testing.T) {
 	testCollection := testDatabase.Collection(wrongName)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -116,7 +118,8 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -126,7 +129,8 @@ func TestSource_Read_successSnapshot(t *testing.T) {
 	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -158,7 +162,8 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -168,7 +173,8 @@ func TestSource_Read_continueSnapshot(t *testing.T) {
 	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -223,7 +229,8 @@ func TestSource_Read_successCDC(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -233,7 +240,8 @@ func TestSource_Read_successCDC(t *testing.T) {
 	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -289,7 +297,8 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -299,7 +308,8 @@ func TestSource_Read_successCDCAfterSnapshotPause(t *testing.T) {
 	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -364,7 +374,8 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	mongoClient, err := createTestMongoClient(ctx, cfg.URIStr)
 	is.NoErr(err)
 	t.Cleanup(func() {
-		err = mongoClient.Disconnect(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = mongoClient.Disconnect(cleanupCtx)
 		is.NoErr(err)
 	})
 
@@ -374,7 +385,8 @@ func TestSource_Read_continueCDC(t *testing.T) {
 	testCollection := testDatabase.Collection(cfg.Collection)
 	// drop the created test collection after the test
 	t.Cleanup(func() {
-		err = testCollection.Drop(t.Context())
+		cleanupCtx := context.WithoutCancel(ctx)
+		err = testCollection.Drop(cleanupCtx)
 		is.NoErr(err)
 	})
 
