@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.17.3
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.5.2
 	go.uber.org/multierr v1.11.0
 )
 
