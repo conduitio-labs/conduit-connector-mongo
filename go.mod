@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
-	github.com/conduitio/conduit-commons v0.5.3
+	github.com/conduitio/conduit-commons v0.5.4
 	github.com/conduitio/conduit-connector-sdk v0.13.4
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/matryer/is v1.4.1
