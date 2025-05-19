@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/brianvoe/gofakeit v3.18.0+incompatible
 	github.com/conduitio/conduit-commons v0.5.3
-	github.com/conduitio/conduit-connector-sdk v0.13.3
+	github.com/conduitio/conduit-connector-sdk v0.13.4
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/matryer/is v1.4.1
 	go.mongodb.org/mongo-driver v1.17.3
@@ -235,7 +235,7 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250219182151-9fdb1cabc7b2 // indirect
-	google.golang.org/grpc v1.71.0 // indirect
+	google.golang.org/grpc v1.72.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
