@@ -20,6 +20,31 @@ var (
 	// ErrNoIterator occurs when the [Combined] has no any underlying iterators.
 	ErrNoIterator = errors.New("no iterator")
 
+	// ErrResumeTokenMissing occurs when the connector is asked to resume from a
+	// persisted position that carries no Change Stream resume token, while the
+	// Change Stream is the iterator that would actually be used.
+	//
+	// Refusing is the point. createChangeStream applies SetResumeAfter only when
+	// a token is present; with no token the stream opens with no start point at
+	// all, which MongoDB interprets as "from now". Everything that changed while
+	// the connector was down is then never delivered — silently, with no error
+	// and nothing routed to a DLQ. Verified against a real replica set: only
+	// post-resume writes arrive.
+	//
+	// A position with no token means the token was never captured in the first
+	// place — reachable when the Change Stream could not be opened at initial
+	// construction (see matchProjectStageErrMessage, the Azure CosmosDB path) so
+	// the snapshot recorded positions without one. If the Change Stream later
+	// becomes usable, resuming would silently skip the whole gap.
+	//
+	// Failing loud costs a restart with an explicit, actionable error. Starting
+	// from "now" costs data, invisibly.
+	ErrResumeTokenMissing = errors.New(
+		"cannot resume: persisted position carries no Change Stream resume token, " +
+			"so resuming would silently start from now and skip every change made while " +
+			"the connector was down; delete the pipeline's stored position to re-snapshot " +
+			"from scratch, or restore a position captured with a resume token")
+
 	// errUnsupportedOperationType occurs when we got an unsupported operation type.
 	// This error shouldn't actually occur, as we filter Change Stream events by operation type.
 	// It's just a sentinel error for the [changeStreamEvent.toRecord] method.

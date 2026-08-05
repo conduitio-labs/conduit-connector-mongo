@@ -75,6 +75,24 @@ func NewCombined(ctx context.Context, params CombinedParams) (*Combined, error) 
 		}
 	}
 
+	// Invariant 3 (at-least-once): if the Change Stream is the iterator we are
+	// going to use, and we were handed a position to resume from, that position
+	// MUST carry a resume token. Without one, createChangeStream opens the
+	// stream with no start point and MongoDB serves it from now — silently
+	// dropping every change made while the connector was down.
+	//
+	// Scoped deliberately to combined.cdc != nil: when the Change Stream could
+	// not be opened at all (the CosmosDB path above) the polling snapshot is
+	// what runs, no Change Stream is consulted, and there is nothing to resume
+	// incorrectly. Guarding earlier would break that fallback by pre-empting the
+	// matchProjectStageErrMessage check.
+	//
+	// position == nil is a genuinely fresh start and legitimately begins from
+	// now; that is not this case.
+	if err := checkResumeToken(combined.cdc != nil, position); err != nil {
+		return nil, err
+	}
+
 	// initialize the object only if the user has determined that it is required
 	// and if there is no position or the position mode is a snapshot
 	if params.Snapshot && (position == nil || position.Mode == modeSnapshot) {
@@ -171,6 +189,17 @@ func (c *Combined) Stop(ctx context.Context) error {
 		if err := c.cdc.stop(ctx); err != nil {
 			return fmt.Errorf("stop cdc: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// checkResumeToken reports whether resuming is safe. Extracted so the decision
+// is directly testable — see resume_token_guard_test.go for why an integration
+// test would not have been.
+func checkResumeToken(cdcInUse bool, pos *position) error {
+	if cdcInUse && pos != nil && pos.ResumeToken == nil {
+		return ErrResumeTokenMissing
 	}
 
 	return nil
