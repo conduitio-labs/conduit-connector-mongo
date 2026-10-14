@@ -31,7 +31,7 @@ jobs:
       resolved-identity: ${{ steps.publish.outputs.resolved-identity }}
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # The Action uploads signed assets with `gh release upload` (no create),
       # so the release must exist first. release.yml (GoReleaser) also creates
@@ -50,7 +50,7 @@ jobs:
 
       - name: Build + cosign-sign the artifact matrix
         id: publish
-        uses: ConduitIO/connector-publish-action@v1
+        uses: ConduitIO/connector-publish-action@e527dd06c971596b2020d682258fbe50bef62411 # v1.0.7
         with:
           mode: build
           connector-name: mongo
@@ -89,7 +89,7 @@ jobs:
       id-token: write   # this job's own cosign identity must resolve the same as build's
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # dry-run: assemble and check the index entry (identity resolution,
       # routing) without opening a PR on the registry. Community-tier entries
@@ -97,7 +97,7 @@ jobs:
       # (ConduitIO/conduit#2963); the entry is added by hand until then.
       # Remove dry-run and add index-repo-token to switch to automatic PRs.
       - name: Assemble the index entry (dry run, no registry PR)
-        uses: ConduitIO/connector-publish-action@v1
+        uses: ConduitIO/connector-publish-action@e527dd06c971596b2020d682258fbe50bef62411 # v1.0.7
         with:
           mode: publish
           dry-run: 'true'
